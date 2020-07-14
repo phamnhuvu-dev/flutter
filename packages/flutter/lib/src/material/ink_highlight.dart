@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -8,7 +10,7 @@ import 'package:flutter/widgets.dart';
 import 'ink_well.dart' show InteractiveInkFeature;
 import 'material.dart';
 
-const Duration _kHighlightFadeDuration = Duration(milliseconds: 200);
+const Duration _kDefaultHighlightFadeDuration = Duration(milliseconds: 200);
 
 /// A visual emphasis on a part of a [Material] receiving user interaction.
 ///
@@ -41,20 +43,24 @@ class InkHighlight extends InteractiveInkFeature {
     @required Color color,
     @required TextDirection textDirection,
     BoxShape shape = BoxShape.rectangle,
+    double radius,
     BorderRadius borderRadius,
     ShapeBorder customBorder,
     RectCallback rectCallback,
     VoidCallback onRemoved,
+    Duration fadeDuration = _kDefaultHighlightFadeDuration,
   }) : assert(color != null),
        assert(shape != null),
        assert(textDirection != null),
+       assert(fadeDuration != null),
        _shape = shape,
+       _radius = radius,
        _borderRadius = borderRadius ?? BorderRadius.zero,
        _customBorder = customBorder,
        _textDirection = textDirection,
        _rectCallback = rectCallback,
        super(controller: controller, referenceBox: referenceBox, color: color, onRemoved: onRemoved) {
-    _alphaController = AnimationController(duration: _kHighlightFadeDuration, vsync: controller.vsync)
+    _alphaController = AnimationController(duration: fadeDuration, vsync: controller.vsync)
       ..addListener(controller.markNeedsPaint)
       ..addStatusListener(_handleAlphaStatusChanged)
       ..forward();
@@ -67,6 +73,7 @@ class InkHighlight extends InteractiveInkFeature {
   }
 
   final BoxShape _shape;
+  final double _radius;
   final BorderRadius _borderRadius;
   final ShapeBorder _customBorder;
   final RectCallback _rectCallback;
@@ -110,7 +117,7 @@ class InkHighlight extends InteractiveInkFeature {
     }
     switch (_shape) {
       case BoxShape.circle:
-        canvas.drawCircle(rect.center, Material.defaultSplashRadius, paint);
+        canvas.drawCircle(rect.center, _radius ?? Material.defaultSplashRadius, paint);
         break;
       case BoxShape.rectangle:
         if (_borderRadius != BorderRadius.zero) {

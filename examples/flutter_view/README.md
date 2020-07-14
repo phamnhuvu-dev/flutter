@@ -6,13 +6,12 @@ Android, the Android and Flutter components are built with Android Studio or
 gradle.
 
 You can read more about
-[accessing platform and third-party services in Flutter](https://flutter.io/platform-services/).
+[accessing platform and third-party services in Flutter](https://flutter.dev/platform-services/).
 
 ## iOS
 
 You can open `ios/Runner.xcworkspace` in Xcode and build the project as
-usual. For this sample you need to run `pod install` from the `ios` folder
-before building the first time.
+usual.
 
 ## Android
 

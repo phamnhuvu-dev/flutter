@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/rendering.dart';
 import '../flutter_test_alternative.dart';
@@ -11,7 +13,7 @@ void main() {
   test('RenderPositionedBox expands', () {
     final RenderConstrainedBox sizer = RenderConstrainedBox(
       additionalConstraints: BoxConstraints.tight(const Size(100.0, 100.0)),
-      child: RenderDecoratedBox(decoration: const BoxDecoration())
+      child: RenderDecoratedBox(decoration: const BoxDecoration()),
     );
     final RenderPositionedBox positioner = RenderPositionedBox(child: sizer);
     layout(positioner, constraints: BoxConstraints.loose(const Size(200.0, 200.0)));
@@ -23,7 +25,7 @@ void main() {
   test('RenderPositionedBox shrink wraps', () {
     final RenderConstrainedBox sizer = RenderConstrainedBox(
       additionalConstraints: BoxConstraints.tight(const Size(100.0, 100.0)),
-      child: RenderDecoratedBox(decoration: const BoxDecoration())
+      child: RenderDecoratedBox(decoration: const BoxDecoration()),
     );
     final RenderPositionedBox positioner = RenderPositionedBox(child: sizer, widthFactor: 1.0);
     layout(positioner, constraints: BoxConstraints.loose(const Size(200.0, 200.0)));
@@ -48,7 +50,7 @@ void main() {
   test('RenderPositionedBox width and height factors', () {
     final RenderConstrainedBox sizer = RenderConstrainedBox(
       additionalConstraints: BoxConstraints.tight(const Size(100.0, 100.0)),
-      child: RenderDecoratedBox(decoration: const BoxDecoration())
+      child: RenderDecoratedBox(decoration: const BoxDecoration()),
     );
     final RenderPositionedBox positioner = RenderPositionedBox(child: sizer, widthFactor: 1.0, heightFactor: 0.0);
     layout(positioner, constraints: BoxConstraints.loose(const Size(200.0, 200.0)));

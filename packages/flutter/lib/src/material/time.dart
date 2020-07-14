@@ -1,11 +1,16 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
 import 'dart:ui' show hashValues;
+
 import 'package:flutter/widgets.dart';
 
+import 'debug.dart';
 import 'material_localizations.dart';
+
 
 /// Whether the [TimeOfDay] is before or after noon.
 enum DayPeriod {
@@ -19,7 +24,21 @@ enum DayPeriod {
 /// A value representing a time during the day, independent of the date that
 /// day might fall on or the time zone.
 ///
-/// The time is represented by [hour] and [minute] pair.
+/// The time is represented by [hour] and [minute] pair. Once created, both
+/// values cannot be changed.
+///
+/// You can create TimeOfDay using the constructor which requires both hour and
+/// minute or using [DateTime] object.
+/// Hours are specified between 0 and 23, as in a 24-hour clock.
+///
+/// {@tool snippet}
+///
+/// ```dart
+/// TimeOfDay now = TimeOfDay.now();
+/// TimeOfDay releaseTime = TimeOfDay(hour: 15, minute: 0); // 3:00pm
+/// TimeOfDay roomBooked = TimeOfDay.fromDateTime(DateTime.parse('2018-10-20 16:30:04Z')); // 4:30pm
+/// ```
+/// {@end-tool}
 ///
 /// See also:
 ///
@@ -40,7 +59,9 @@ class TimeOfDay {
   ///
   /// The [hour] is set to the time's hour and the [minute] is set to the time's
   /// minute in the timezone of the given [DateTime].
-  TimeOfDay.fromDateTime(DateTime time) : hour = time.hour, minute = time.minute;
+  TimeOfDay.fromDateTime(DateTime time)
+    : hour = time.hour,
+      minute = time.minute;
 
   /// Creates a time of day based on the current time.
   ///
@@ -83,7 +104,8 @@ class TimeOfDay {
   ///
   /// This is a shortcut for [MaterialLocalizations.formatTimeOfDay].
   String format(BuildContext context) {
-    debugCheckHasMediaQuery(context);
+    assert(debugCheckHasMediaQuery(context));
+    assert(debugCheckHasMaterialLocalizations(context));
     final MaterialLocalizations localizations = MaterialLocalizations.of(context);
     return localizations.formatTimeOfDay(
       this,
@@ -92,12 +114,10 @@ class TimeOfDay {
   }
 
   @override
-  bool operator ==(dynamic other) {
-    if (other is! TimeOfDay)
-      return false;
-    final TimeOfDay typedOther = other;
-    return typedOther.hour == hour
-        && typedOther.minute == minute;
+  bool operator ==(Object other) {
+    return other is TimeOfDay
+        && other.hour == hour
+        && other.minute == minute;
   }
 
   @override

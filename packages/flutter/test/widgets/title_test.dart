@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
@@ -40,13 +42,12 @@ void main() {
 
   testWidgets('should not allow non-opaque color', (WidgetTester tester) async {
     expect(() => Title(
-      color: const Color(0),
+      color: const Color(0x00000000),
       child: Container(),
     ), throwsAssertionError);
   });
 
-  testWidgets('should not pass "null" to setApplicationSwitcherDescription',
-          (WidgetTester tester) async {
+  testWidgets('should not pass "null" to setApplicationSwitcherDescription', (WidgetTester tester) async {
     final List<MethodCall> log = <MethodCall>[];
 
     SystemChannels.platform.setMockMethodCallHandler((MethodCall methodCall) async {

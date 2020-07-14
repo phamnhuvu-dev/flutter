@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:math' as math show pi;
 
@@ -24,7 +26,7 @@ void main() {
           child: AnimatedIcon(
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
-          )
+          ),
         ),
       ),
     );
@@ -46,7 +48,7 @@ void main() {
           child: AnimatedIcon(
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
-          )
+          ),
         ),
       ),
     );
@@ -68,7 +70,7 @@ void main() {
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
             color: Color(0xFF0000FF),
-          )
+          ),
         ),
       ),
     );
@@ -90,7 +92,7 @@ void main() {
           child: AnimatedIcon(
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
-          )
+          ),
         ),
       ),
     );
@@ -114,7 +116,7 @@ void main() {
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
             size: 96.0,
-          )
+          ),
         ),
       ),
     );
@@ -156,7 +158,7 @@ void main() {
           child: AnimatedIcon(
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
-          )
+          ),
         ),
       ),
     );
@@ -165,7 +167,7 @@ void main() {
     customPaint.painter.paint(canvas, const Size(48.0, 48.0));
     verifyInOrder(<void>[
       canvas.rotate(math.pi),
-      canvas.translate(-48.0, -48.0)
+      canvas.translate(-48.0, -48.0),
     ]);
   });
 
@@ -180,7 +182,7 @@ void main() {
           child: AnimatedIcon(
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
-          )
+          ),
         ),
       ),
     );
@@ -203,7 +205,7 @@ void main() {
             progress: AlwaysStoppedAnimation<double>(0.0),
             icon: AnimatedIcons.arrow_menu,
             textDirection: TextDirection.rtl,
-          )
+          ),
         ),
       ),
     );
@@ -212,7 +214,7 @@ void main() {
     customPaint.painter.paint(canvas, const Size(48.0, 48.0));
     verifyInOrder(<void>[
       canvas.rotate(math.pi),
-      canvas.translate(-48.0, -48.0)
+      canvas.translate(-48.0, -48.0),
     ]);
   });
 }
@@ -232,7 +234,7 @@ class PaintColorMatcher extends Matcher {
 
   @override
   bool matches(dynamic item, Map<dynamic, dynamic> matchState) {
-    final Paint actualPaint = item;
+    final Paint actualPaint = item as Paint;
     return actualPaint.color == Color(expectedColor);
   }
 }

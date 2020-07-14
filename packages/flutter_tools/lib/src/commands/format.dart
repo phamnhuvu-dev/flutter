@@ -1,34 +1,21 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'dart:async';
 
+import 'package:args/args.dart';
+
+import '../artifacts.dart';
 import '../base/common.dart';
 import '../base/process.dart';
-import '../dart/sdk.dart';
+import '../globals.dart' as globals;
 import '../runner/flutter_command.dart';
 
 class FormatCommand extends FlutterCommand {
-  FormatCommand() {
-    argParser.addFlag('dry-run',
-      abbr: 'n',
-      help: 'Show which files would be modified but make no changes.',
-      defaultsTo: false,
-      negatable: false,
-    );
-    argParser.addFlag('set-exit-if-changed',
-      help: 'Return exit code 1 if there are any formatting changes.',
-      defaultsTo: false,
-      negatable: false,
-    );
-    argParser.addFlag('machine',
-      abbr: 'm',
-      help: 'Produce machine-readable JSON output.',
-      defaultsTo: false,
-      negatable: false,
-    );
-  }
+  @override
+  ArgParser get argParser => _argParser;
+  final ArgParser _argParser = ArgParser.allowAnything();
 
   @override
   final String name = 'format';
@@ -43,41 +30,21 @@ class FormatCommand extends FlutterCommand {
   String get invocation => '${runner.executableName} $name <one or more paths>';
 
   @override
+  bool get shouldUpdateCache => false;
+
+  @override
   Future<FlutterCommandResult> runCommand() async {
-    if (argResults.rest.isEmpty) {
-      throwToolExit(
-        'No files specified to be formatted.\n'
-        '\n'
-        'To format all files in the current directory tree:\n'
-        '${runner.executableName} $name .\n'
-        '\n'
-        '$usage'
-      );
+    final String dartBinary = globals.artifacts.getArtifactPath(Artifact.engineDartBinary);
+    final List<String> command = <String>[
+      dartBinary,
+      'format',
+      ...argResults.rest,
+    ];
+
+    final int result = await processUtils.stream(command);
+    if (result != 0) {
+      throwToolExit('', exitCode: result);
     }
-
-    final String dartfmt = sdkBinaryName('dartfmt');
-    final List<String> command = <String>[dartfmt];
-
-    if (argResults['dry-run']) {
-      command.add('-n');
-    }
-    if (argResults['machine']) {
-      command.add('-m');
-    }
-    if (!argResults['dry-run'] && !argResults['machine']) {
-      command.add('-w');
-    }
-
-    if (argResults['set-exit-if-changed']) {
-      command.add('--set-exit-if-changed');
-    }
-
-    command..addAll(argResults.rest);
-
-    final int result = await runCommandAndStreamOutput(command);
-    if (result != 0)
-      throwToolExit('Formatting failed: $result', exitCode: result);
-
-    return null;
+    return FlutterCommandResult.success();
   }
 }

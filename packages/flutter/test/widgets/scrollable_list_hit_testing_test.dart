@@ -1,10 +1,13 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 
 const List<int> items = <int>[0, 1, 2, 3, 4, 5];
 
@@ -18,6 +21,7 @@ void main() {
           child: Container(
             height: 50.0,
             child: ListView(
+              dragStartBehavior: DragStartBehavior.down,
               itemExtent: 290.0,
               scrollDirection: Axis.horizontal,
               children: items.map<Widget>((int item) {
@@ -25,6 +29,7 @@ void main() {
                   child: GestureDetector(
                     onTap: () { tapped.add(item); },
                     child: Text('$item'),
+                    dragStartBehavior: DragStartBehavior.down,
                   ),
                 );
               }).toList(),
@@ -60,6 +65,7 @@ void main() {
           child: Container(
             width: 50.0,
             child: ListView(
+              dragStartBehavior: DragStartBehavior.down,
               itemExtent: 290.0,
               scrollDirection: Axis.vertical,
               children: items.map<Widget>((int item) {
@@ -67,6 +73,7 @@ void main() {
                   child: GestureDetector(
                     onTap: () { tapped.add(item); },
                     child: Text('$item'),
+                    dragStartBehavior: DragStartBehavior.down,
                   ),
                 );
               }).toList(),

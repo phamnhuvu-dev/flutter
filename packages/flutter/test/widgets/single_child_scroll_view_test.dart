@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:ui';
 
@@ -8,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
+import '../rendering/rendering_tester.dart';
 import 'semantics_tester.dart';
 
 class TestScrollPosition extends ScrollPositionWithSingleContext {
@@ -37,6 +40,27 @@ class TestScrollController extends ScrollController {
 }
 
 void main() {
+  testWidgets('SingleChildScrollView respects clipBehavior', (WidgetTester tester) async {
+    await tester.pumpWidget(SingleChildScrollView(child: Container(height: 2000.0)));
+
+    // 1st, check that the render object has received the default clip behavior.
+    final dynamic renderObject = tester.allRenderObjects.where((RenderObject o) => o.runtimeType.toString() == '_RenderSingleChildViewport').first;
+    expect(renderObject.clipBehavior, equals(Clip.hardEdge));
+
+    // 2nd, check that the painting context has received the default clip behavior.
+    final TestClipPaintingContext context = TestClipPaintingContext();
+    renderObject.paint(context, Offset.zero);
+    expect(context.clipBehavior, equals(Clip.hardEdge));
+
+    // 3rd, pump a new widget to check that the render object can update its clip behavior.
+    await tester.pumpWidget(SingleChildScrollView(clipBehavior: Clip.antiAlias, child: Container(height: 2000.0)));
+    expect(renderObject.clipBehavior, equals(Clip.antiAlias));
+
+    // 4th, check that a non-default clip behavior can be sent to the painting context.
+    renderObject.paint(context, Offset.zero);
+    expect(context.clipBehavior, equals(Clip.antiAlias));
+  });
+
   testWidgets('SingleChildScrollView control test', (WidgetTester tester) async {
     await tester.pumpWidget(SingleChildScrollView(
       child: Container(
@@ -72,7 +96,7 @@ void main() {
     ));
 
     final ScrollableState scrollable = tester.state(find.byType(Scrollable));
-    expect(scrollable.position, isInstanceOf<TestScrollPosition>());
+    expect(scrollable.position, isA<TestScrollPosition>());
   });
 
   testWidgets('Sets PrimaryScrollController when primary', (WidgetTester tester) async {
@@ -131,12 +155,12 @@ void main() {
   });
 
   testWidgets('Vertical SingleChildScrollViews are primary by default', (WidgetTester tester) async {
-    final SingleChildScrollView view = SingleChildScrollView(scrollDirection: Axis.vertical);
+    const SingleChildScrollView view = SingleChildScrollView(scrollDirection: Axis.vertical);
     expect(view.primary, isTrue);
   });
 
   testWidgets('Horizontal SingleChildScrollViews are non-primary by default', (WidgetTester tester) async {
-    final SingleChildScrollView view = SingleChildScrollView(scrollDirection: Axis.horizontal);
+    const SingleChildScrollView view = SingleChildScrollView(scrollDirection: Axis.horizontal);
     expect(view.primary, isFalse);
   });
 
@@ -201,6 +225,9 @@ void main() {
       TestSemantics(
         children: <TestSemantics>[
           TestSemantics(
+            flags: <SemanticsFlag>[
+              SemanticsFlag.hasImplicitScrolling,
+            ],
             actions: <SemanticsAction>[
               SemanticsAction.scrollUp,
             ],
@@ -244,6 +271,9 @@ void main() {
       TestSemantics(
         children: <TestSemantics>[
           TestSemantics(
+            flags: <SemanticsFlag>[
+              SemanticsFlag.hasImplicitScrolling,
+            ],
             actions: <SemanticsAction>[
               SemanticsAction.scrollUp,
               SemanticsAction.scrollDown,
@@ -303,6 +333,9 @@ void main() {
       TestSemantics(
         children: <TestSemantics>[
           TestSemantics(
+            flags: <SemanticsFlag>[
+              SemanticsFlag.hasImplicitScrolling,
+            ],
             actions: <SemanticsAction>[
               SemanticsAction.scrollDown,
             ],
@@ -369,24 +402,24 @@ void main() {
       ),
     );
 
-    final RenderAbstractViewport viewport = tester.allRenderObjects.firstWhere((RenderObject r) => r is RenderAbstractViewport);
+    final RenderAbstractViewport viewport = tester.allRenderObjects.whereType<RenderAbstractViewport>().first;
 
     final RenderObject target = tester.renderObject(find.byWidget(children[5]));
     RevealedOffset revealed = viewport.getOffsetToReveal(target, 0.0);
     expect(revealed.offset, 500.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 0.0, 300.0, 100.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 0.0, 300.0, 100.0));
 
     revealed = viewport.getOffsetToReveal(target, 1.0);
     expect(revealed.offset, 400.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 100.0, 300.0, 100.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 100.0, 300.0, 100.0));
 
-    revealed = viewport.getOffsetToReveal(target, 0.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 0.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 540.0);
-    expect(revealed.rect, Rect.fromLTWH(40.0, 0.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(40.0, 0.0, 10.0, 10.0));
 
-    revealed = viewport.getOffsetToReveal(target, 1.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 1.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 350.0);
-    expect(revealed.rect, Rect.fromLTWH(40.0, 190.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(40.0, 190.0, 10.0, 10.0));
   });
 
   testWidgets('SingleChildScrollView getOffsetToReveal - up', (WidgetTester tester) async {
@@ -416,24 +449,24 @@ void main() {
       ),
     );
 
-    final RenderAbstractViewport viewport = tester.allRenderObjects.firstWhere((RenderObject r) => r is RenderAbstractViewport);
+    final RenderAbstractViewport viewport = tester.allRenderObjects.whereType<RenderAbstractViewport>().first;
 
     final RenderObject target = tester.renderObject(find.byWidget(children[5]));
     RevealedOffset revealed = viewport.getOffsetToReveal(target, 0.0);
     expect(revealed.offset, 500.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 100.0, 300.0, 100.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 100.0, 300.0, 100.0));
 
     revealed = viewport.getOffsetToReveal(target, 1.0);
     expect(revealed.offset, 400.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 0.0, 300.0, 100.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 0.0, 300.0, 100.0));
 
-    revealed = viewport.getOffsetToReveal(target, 0.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 0.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 550.0);
-    expect(revealed.rect, Rect.fromLTWH(40.0, 190.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(40.0, 190.0, 10.0, 10.0));
 
-    revealed = viewport.getOffsetToReveal(target, 1.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 1.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 360.0);
-    expect(revealed.rect, Rect.fromLTWH(40.0, 0.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(40.0, 0.0, 10.0, 10.0));
   });
 
   testWidgets('SingleChildScrollView getOffsetToReveal - right', (WidgetTester tester) async {
@@ -464,24 +497,24 @@ void main() {
       ),
     );
 
-    final RenderAbstractViewport viewport = tester.allRenderObjects.firstWhere((RenderObject r) => r is RenderAbstractViewport);
+    final RenderAbstractViewport viewport = tester.allRenderObjects.whereType<RenderAbstractViewport>().first;
 
     final RenderObject target = tester.renderObject(find.byWidget(children[5]));
     RevealedOffset revealed = viewport.getOffsetToReveal(target, 0.0);
     expect(revealed.offset, 500.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 0.0, 100.0, 300.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 0.0, 100.0, 300.0));
 
     revealed = viewport.getOffsetToReveal(target, 1.0);
     expect(revealed.offset, 400.0);
-    expect(revealed.rect, Rect.fromLTWH(100.0, 0.0, 100.0, 300.0));
+    expect(revealed.rect, const Rect.fromLTWH(100.0, 0.0, 100.0, 300.0));
 
-    revealed = viewport.getOffsetToReveal(target, 0.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 0.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 540.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 40.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 40.0, 10.0, 10.0));
 
-    revealed = viewport.getOffsetToReveal(target, 1.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 1.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 350.0);
-    expect(revealed.rect, Rect.fromLTWH(190.0, 40.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(190.0, 40.0, 10.0, 10.0));
   });
 
   testWidgets('SingleChildScrollView getOffsetToReveal - left', (WidgetTester tester) async {
@@ -513,24 +546,24 @@ void main() {
       ),
     );
 
-    final RenderAbstractViewport viewport = tester.allRenderObjects.firstWhere((RenderObject r) => r is RenderAbstractViewport);
+    final RenderAbstractViewport viewport = tester.allRenderObjects.whereType<RenderAbstractViewport>().first;
 
     final RenderObject target = tester.renderObject(find.byWidget(children[5]));
     RevealedOffset revealed = viewport.getOffsetToReveal(target, 0.0);
     expect(revealed.offset, 500.0);
-    expect(revealed.rect, Rect.fromLTWH(100.0, 0.0, 100.0, 300.0));
+    expect(revealed.rect, const Rect.fromLTWH(100.0, 0.0, 100.0, 300.0));
 
     revealed = viewport.getOffsetToReveal(target, 1.0);
     expect(revealed.offset, 400.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 0.0, 100.0, 300.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 0.0, 100.0, 300.0));
 
-    revealed = viewport.getOffsetToReveal(target, 0.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 0.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 550.0);
-    expect(revealed.rect, Rect.fromLTWH(190.0, 40.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(190.0, 40.0, 10.0, 10.0));
 
-    revealed = viewport.getOffsetToReveal(target, 1.0, rect: Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
+    revealed = viewport.getOffsetToReveal(target, 1.0, rect: const Rect.fromLTWH(40.0, 40.0, 10.0, 10.0));
     expect(revealed.offset, 360.0);
-    expect(revealed.rect, Rect.fromLTWH(0.0, 40.0, 10.0, 10.0));
+    expect(revealed.rect, const Rect.fromLTWH(0.0, 40.0, 10.0, 10.0));
   });
 
   testWidgets('Nested SingleChildScrollView showOnScreen', (WidgetTester tester) async {
@@ -572,11 +605,12 @@ void main() {
                   children: List<Widget>.generate(10, (int y) {
                     return Row(
                       children: children[y] = List<Widget>.generate(10, (int x) {
-                        return Container(
+                        return SizedBox(
+                          key: UniqueKey(),
                           height: 100.0,
                           width: 100.0,
                         );
-                      })
+                      }),
                     );
                   }),
                 ),
@@ -697,7 +731,7 @@ void main() {
   group('Nested SingleChildScrollView (same orientation) showOnScreen', () {
     List<Widget> children;
 
-    Future<void> buildNestedScroller({WidgetTester tester, ScrollController inner, ScrollController outer}) {
+    Future<void> buildNestedScroller({ WidgetTester tester, ScrollController inner, ScrollController outer }) {
       return tester.pumpWidget(
         Directionality(
           textDirection: TextDirection.ltr,
@@ -730,7 +764,7 @@ void main() {
                     ),
                     Container(
                       height: 200.0,
-                    )
+                    ),
                   ],
                 ),
               ),

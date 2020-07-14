@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/rendering.dart';
 
@@ -14,10 +16,10 @@ import 'framework.dart';
 /// [Flex.mainAxisAlignment] on a flex container that contains a [Spacer] to
 /// [MainAxisAlignment.spaceAround], [MainAxisAlignment.spaceBetween], or
 /// [MainAxisAlignment.spaceEvenly] will not have any visible effect: the
-/// [Spacer] has taken up all of the additional space, so there is none left to
-/// redistribute.
+/// [Spacer] has taken up all of the additional space, therefore there is none
+/// left to redistribute.
 ///
-/// ## Sample code
+/// {@tool snippet}
 ///
 /// ```dart
 /// Row(
@@ -31,6 +33,9 @@ import 'framework.dart';
 ///   ],
 /// )
 /// ```
+/// {@end-tool}
+///
+/// {@youtube 560 315 https://www.youtube.com/watch?v=7FJgd7QN1zI}
 ///
 /// See also:
 ///
@@ -42,9 +47,9 @@ class Spacer extends StatelessWidget {
   ///
   /// The [flex] parameter may not be null or less than one.
   const Spacer({Key key, this.flex = 1})
-      : assert(flex != null),
-        assert(flex > 0),
-        super(key: key);
+    : assert(flex != null),
+      assert(flex > 0),
+      super(key: key);
 
   /// The flex factor to use in determining how much space to take up.
   ///
@@ -59,10 +64,7 @@ class Spacer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       flex: flex,
-      child: const SizedBox(
-        height: 0.0,
-        width: 0.0,
-      ),
+      child: const SizedBox.shrink(),
     );
   }
 }

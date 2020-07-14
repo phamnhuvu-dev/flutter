@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
@@ -17,7 +19,7 @@ Widget buildPage(int page) {
     key: globalKeys[page],
     width: pageSize.width,
     height: pageSize.height,
-    child: Text(page.toString())
+    child: Text(page.toString()),
   );
 }
 

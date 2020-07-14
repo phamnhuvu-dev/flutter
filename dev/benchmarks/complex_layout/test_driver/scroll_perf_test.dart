@@ -1,4 +1,4 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -13,6 +13,8 @@ void main() {
 
     setUpAll(() async {
       driver = await FlutterDriver.connect();
+
+      await driver.waitUntilFirstFrameRasterized();
     });
 
     tearDownAll(() async {
@@ -26,6 +28,9 @@ void main() {
       // benchmark has greater noise.
       // See: https://github.com/flutter/flutter/issues/19434
       await Future<void>.delayed(const Duration(milliseconds: 250));
+
+      await driver.forceGC();
+
       final Timeline timeline = await driver.traceAction(() async {
         // Find the scrollable stock list
         final SerializableFinder list = find.byValueKey(listKey);
@@ -45,8 +50,8 @@ void main() {
       });
 
       final TimelineSummary summary = TimelineSummary.summarize(timeline);
-      summary.writeSummaryToFile(summaryName, pretty: true);
-      summary.writeTimelineToFile(summaryName, pretty: true);
+      await summary.writeSummaryToFile(summaryName, pretty: true);
+      await summary.writeTimelineToFile(summaryName, pretty: true);
     }
 
     test('complex_layout_scroll_perf', () async {

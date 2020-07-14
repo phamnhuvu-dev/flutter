@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
@@ -16,10 +18,10 @@ Future<Size> _getSize(WidgetTester tester, BoxConstraints constraints, double as
           aspectRatio: aspectRatio,
           child: Container(
             key: childKey
-          )
-        )
-      )
-    )
+          ),
+        ),
+      ),
+    ),
   );
   final RenderBox box = tester.renderObject(find.byKey(childKey));
   return box.size;
@@ -42,10 +44,10 @@ void main() {
             aspectRatio: 2.0,
             child: Container(
               key: childKey
-            )
-          )
-        )
-      )
+            ),
+          ),
+        ),
+      ),
     ));
     final RenderBox box = tester.renderObject(find.byKey(childKey));
     expect(box.size, equals(const Size(1200.0, 600.0)));

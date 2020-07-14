@@ -1,9 +1,12 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/gestures.dart' show DragStartBehavior;
 
 import '../rendering/mock_canvas.dart';
 import 'states.dart';
@@ -14,6 +17,7 @@ void main() {
       Directionality(
         textDirection: TextDirection.ltr,
         child: GridView.count(
+          dragStartBehavior: DragStartBehavior.down,
           crossAxisCount: 4,
           children: const <Widget>[],
         ),
@@ -28,9 +32,11 @@ void main() {
       Directionality(
         textDirection: TextDirection.ltr,
         child: GridView.count(
+          dragStartBehavior: DragStartBehavior.down,
           crossAxisCount: 4,
           children: kStates.map<Widget>((String state) {
             return GestureDetector(
+              dragStartBehavior: DragStartBehavior.down,
               onTap: () {
                 log.add(state);
               },
@@ -99,9 +105,11 @@ void main() {
       Directionality(
         textDirection: TextDirection.ltr,
         child: GridView.extent(
+          dragStartBehavior: DragStartBehavior.down,
           maxCrossAxisExtent: 200.0,
           children: kStates.map<Widget>((String state) {
             return GestureDetector(
+              dragStartBehavior: DragStartBehavior.down,
               onTap: () {
                 log.add(state);
               },
@@ -529,5 +537,69 @@ void main() {
 
     expect(tester.getTopLeft(find.byKey(target)), const Offset(600.0, 0.0));
     expect(tester.getBottomRight(find.byKey(target)), const Offset(800.0, 200.0));
+  });
+
+  testWidgets('GridView crossAxisSpacing', (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/27151.
+    final Key target = UniqueKey();
+
+    Widget build(TextDirection textDirection) {
+      return Directionality(
+        textDirection: textDirection,
+        child: GridView.count(
+          crossAxisCount: 4,
+          crossAxisSpacing: 8.0,
+          children: <Widget>[
+            Container(key: target),
+          ],
+        ),
+      );
+    }
+
+    await tester.pumpWidget(build(TextDirection.ltr));
+
+    expect(tester.getTopLeft(find.byKey(target)), Offset.zero);
+    expect(tester.getBottomRight(find.byKey(target)), const Offset(194.0, 194.0));
+
+    await tester.pumpWidget(build(TextDirection.rtl));
+
+    expect(tester.getTopLeft(find.byKey(target)), const Offset(606.0, 0.0));
+    expect(tester.getBottomRight(find.byKey(target)), const Offset(800.0, 194.0));
+  });
+
+  testWidgets('GridView does not cache itemBuilder calls', (WidgetTester tester) async {
+    final Map<int, int> counters = <int, int>{};
+
+    await tester.pumpWidget(Directionality(
+      textDirection: TextDirection.ltr,
+      child: GridView.builder(
+        itemCount: 1000,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+        itemBuilder: (BuildContext context, int index) {
+          counters[index] ??= 0;
+          counters[index] += 1;
+          return SizedBox(
+            key: ValueKey<int>(index),
+            width: 200,
+            height: 200,
+          );
+        },
+      ),
+    ));
+
+    expect(find.byKey(const ValueKey<int>(4)), findsOneWidget);
+    expect(counters[4], 1);
+
+    await tester.fling(find.byType(GridView), const Offset(0, -300), 5000);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey<int>(4)), findsNothing);
+    expect(counters[4], 1);
+
+    await tester.fling(find.byType(GridView), const Offset(0, 300), 5000);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey<int>(4)), findsOneWidget);
+    expect(counters[4], 2);
   });
 }

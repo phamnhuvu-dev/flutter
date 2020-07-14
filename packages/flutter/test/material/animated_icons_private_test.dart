@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 // This is the test for the private implementation of animated icons.
 // To make the private API accessible from the test we do not import the
@@ -100,7 +102,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -122,7 +124,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -144,7 +146,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -166,7 +168,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 0.5,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       verify(mockCanvas.scale(0.5, 0.5));
@@ -179,12 +181,12 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: true,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       verifyInOrder(<void>[
         mockCanvas.rotate(math.pi),
-        mockCanvas.translate(-48.0, -48.0)
+        mockCanvas.translate(-48.0, -48.0),
       ]);
     });
 
@@ -195,7 +197,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -217,7 +219,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -237,7 +239,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
       painter.paint(mockCanvas, size);
       expect(generatedPaths.length, 1);
@@ -257,7 +259,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       final _AnimatedIconPainter painter2 = _AnimatedIconPainter(
@@ -266,7 +268,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       expect(painter1.shouldRepaint(painter2), false);
@@ -279,7 +281,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       final _AnimatedIconPainter painter2 = _AnimatedIconPainter(
@@ -288,7 +290,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       expect(painter1.shouldRepaint(painter2), true);
@@ -301,7 +303,7 @@ void main () {
         color: const Color(0xFF00FF00),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       final _AnimatedIconPainter painter2 = _AnimatedIconPainter(
@@ -310,7 +312,7 @@ void main () {
         color: const Color(0xFFFF0000),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       expect(painter1.shouldRepaint(painter2), true);
@@ -323,7 +325,7 @@ void main () {
         color: const Color(0xFF0000FF),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       final _AnimatedIconPainter painter2 = _AnimatedIconPainter(
@@ -332,7 +334,7 @@ void main () {
         color: const Color(0xFF0000FF),
         scale: 1.0,
         shouldMirror: false,
-        uiPathFactory: pathFactory
+        uiPathFactory: pathFactory,
       );
 
       expect(painter1.shouldRepaint(painter2), true);

@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +13,7 @@ class TestTransition extends AnimatedWidget {
     Key key,
     this.childFirstHalf,
     this.childSecondHalf,
-    Animation<double> animation
+    Animation<double> animation,
   }) : super(key: key, listenable: animation);
 
   final Widget childFirstHalf;
@@ -19,7 +21,7 @@ class TestTransition extends AnimatedWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Animation<double> animation = listenable;
+    final Animation<double> animation = listenable as Animation<double>;
     if (animation.value >= 0.5)
       return childSecondHalf;
     return childFirstHalf;
@@ -86,23 +88,23 @@ void main() {
                 child: Builder(
                   key: insideKey,
                   builder: (BuildContext context) {
-                    final PageRoute<void> route = ModalRoute.of(context);
+                    final PageRoute<void> route = ModalRoute.of(context) as PageRoute<void>;
                     return Column(
                       children: <Widget>[
                         TestTransition(
                           childFirstHalf: const Text('A'),
                           childSecondHalf: const Text('B'),
-                          animation: route.animation
+                          animation: route.animation,
                         ),
                         TestTransition(
                           childFirstHalf: const Text('C'),
                           childSecondHalf: const Text('D'),
-                          animation: route.secondaryAnimation
+                          animation: route.secondaryAnimation,
                         ),
-                      ]
+                      ],
                     );
-                  }
-                )
+                  },
+                ),
               );
             case '/2': return TestRoute<void>(settings: settings, child: const Text('E'));
             case '/3': return TestRoute<void>(settings: settings, child: const Text('F'));
@@ -113,7 +115,7 @@ void main() {
       )
     );
 
-    final NavigatorState navigator = insideKey.currentContext.ancestorStateOfType(const TypeMatcher<NavigatorState>());
+    final NavigatorState navigator = insideKey.currentContext.findAncestorStateOfType<NavigatorState>();
 
     expect(state(), equals('BC')); // transition ->1 is at 1.0
 

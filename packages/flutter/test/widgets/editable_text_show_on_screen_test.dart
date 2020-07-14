@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,7 @@ void main() {
             controller: scrollController,
             children: <Widget>[
               EditableText(
+                backgroundCursorColor: Colors.grey,
                 controller: controller,
                 focusNode: focusNode,
                 style: textStyle,
@@ -67,6 +70,7 @@ void main() {
                 height: 200.0,
               ),
               EditableText(
+                backgroundCursorColor: Colors.grey,
                 scrollPadding: const EdgeInsets.all(50.0),
                 controller: controller,
                 focusNode: focusNode,
@@ -112,6 +116,7 @@ void main() {
                 height: 350.0,
               ),
               EditableText(
+                backgroundCursorColor: Colors.grey,
                 controller: controller,
                 focusNode: focusNode,
                 style: textStyle,
@@ -161,6 +166,7 @@ void main() {
                 height: 350.0,
               ),
               EditableText(
+                backgroundCursorColor: Colors.grey,
                 controller: controller,
                 focusNode: focusNode,
                 style: textStyle,
@@ -191,34 +197,41 @@ void main() {
     expect(find.byType(EditableText), findsNothing);
   });
 
-  testWidgets('entering text does not scroll a sourrounding PageView', (WidgetTester tester) async {
+  testWidgets('entering text does not scroll a surrounding PageView', (WidgetTester tester) async {
     // regression test for https://github.com/flutter/flutter/issues/19523
 
     final TextEditingController textController = TextEditingController();
     final PageController pageController = PageController(initialPage: 1);
 
-    await tester.pumpWidget(Directionality(
-      textDirection: TextDirection.ltr,
-      child: Material(
-        child: PageView(
-          controller: pageController,
-          children: <Widget>[
-            Container(
-              color: Colors.red,
-            ),
-            Container(
-              child: TextField(
-                controller: textController,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(devicePixelRatio: 1.0),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Material(
+              child: PageView(
+                controller: pageController,
+                children: <Widget>[
+                  Container(
+                    color: Colors.red,
+                  ),
+                  Container(
+                    child: TextField(
+                      controller: textController,
+                    ),
+                    color: Colors.green,
+                  ),
+                  Container(
+                    color: Colors.red,
+                  ),
+                ],
               ),
-              color: Colors.green,
             ),
-            Container(
-              color: Colors.red,
-            ),
-          ],
+          ),
         ),
       ),
-    ));
+    );
 
     await tester.showKeyboard(find.byType(EditableText));
     await tester.pumpAndSettle();
@@ -247,7 +260,8 @@ void main() {
             controller: scrollController,
             children: <Widget>[
               EditableText(
-                maxLines: null, // multi-line
+                backgroundCursorColor: Colors.grey,
+                maxLines: null, // multiline
                 controller: controller,
                 focusNode: focusNode,
                 style: textStyle,
@@ -302,6 +316,7 @@ void main() {
                 height: 200.0,
               ),
               EditableText(
+                backgroundCursorColor: Colors.grey,
                 scrollPadding: const EdgeInsets.only(bottom: 300.0),
                 controller: controller,
                 focusNode: focusNode,

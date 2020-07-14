@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -19,11 +21,11 @@ void main() {
             PageStorage.of(context).writeState(context, storedValue);
             setState = setter;
             return Center(
-              child: Text('storedValue: $storedValue')
+              child: Text('storedValue: $storedValue'),
             );
-          }
-        )
-      )
+          },
+        ),
+      ),
     );
 
     final Element builderElement = tester.element(find.byKey(builderKey));
@@ -49,10 +51,10 @@ void main() {
             PageStorage.of(context).writeState(context, storedValue, identifier: 123);
             setState = setter;
             return Center(
-              child: Text('storedValue: $storedValue')
+              child: Text('storedValue: $storedValue'),
             );
-          }
-        )
+          },
+        ),
       );
     }
 

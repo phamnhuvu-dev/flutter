@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 // Modeled after Android's ViewConfiguration:
 // https://github.com/android/platform_frameworks_base/blob/master/core/java/android/view/ViewConfiguration.java
@@ -26,14 +28,12 @@ const Duration kLongPressTimeout = Duration(milliseconds: 500);
 
 /// The maximum time from the start of the first tap to the start of the second
 /// tap in a double-tap gesture.
-// TODO(ianh): In Android, this is actually the time from the first's up event
+// In Android, this is actually the time from the first's up event
 // to the second's down event, according to the ViewConfiguration docs.
 const Duration kDoubleTapTimeout = Duration(milliseconds: 300);
 
 /// The minimum time from the end of the first tap to the start of the second
-/// tap in a double-tap gesture. (Currently not honored by the
-/// DoubleTapGestureRecognizer.)
-// TODO(ianh): Either implement this or remove the constant.
+/// tap in a double-tap gesture.
 const Duration kDoubleTapMinTime = Duration(milliseconds: 40);
 
 /// The maximum distance that the first touch in a double-tap gesture can travel
@@ -54,6 +54,10 @@ const Duration kZoomControlsTimeout = Duration(milliseconds: 3000);
 /// the gesture is a scroll gesture, or, inversely, the maximum distance that a
 /// touch can travel before the framework becomes confident that it is not a
 /// tap.
+///
+/// A total delta less than or equal to [kTouchSlop] is not considered to be a
+/// drag, whereas if the delta is greater than [kTouchSlop] it is considered to
+/// be a drag.
 // This value was empirically derived. We started at 8.0 and increased it to
 // 18.0 after getting complaints that it was too difficult to hit targets.
 const double kTouchSlop = 18.0; // Logical pixels

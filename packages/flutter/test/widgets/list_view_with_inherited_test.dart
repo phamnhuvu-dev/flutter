@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
@@ -15,8 +17,8 @@ Widget buildCard(BuildContext context, int index) {
     height: 100.0,
     child: DefaultTextStyle(
       style: TextStyle(fontSize: 2.0 + items.length.toDouble()),
-      child: Text('${items[index]}', textDirection: TextDirection.ltr)
-    )
+      child: Text('${items[index]}', textDirection: TextDirection.ltr),
+    ),
   );
 }
 

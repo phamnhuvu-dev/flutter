@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -21,8 +23,8 @@ void main() {
       child: RenderLimitedBox(
         maxWidth: 100.0,
         maxHeight: 200.0,
-        child: child
-      )
+        child: child,
+      ),
     );
     layout(parent);
     expect(child.size.width, 100.0);
@@ -32,7 +34,7 @@ void main() {
     expect(
       parent.toStringDeep(minLevel: DiagnosticLevel.info),
       equalsIgnoringHashCodes(
-        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT\n'
+        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE\n'
         ' │ parentData: <none>\n'
         ' │ constraints: BoxConstraints(w=800.0, h=600.0)\n'
         ' │ size: Size(800.0, 600.0)\n'
@@ -42,7 +44,7 @@ void main() {
         ' │ minHeight: 0.0\n'
         ' │ maxHeight: Infinity\n'
         ' │\n'
-        ' └─child: RenderLimitedBox#00000 relayoutBoundary=up1 NEEDS-PAINT\n'
+        ' └─child: RenderLimitedBox#00000 relayoutBoundary=up1 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE\n'
         '   │ parentData: offset=Offset(350.0, 200.0) (can use size)\n'
         '   │ constraints: BoxConstraints(unconstrained)\n'
         '   │ size: Size(100.0, 200.0)\n'
@@ -70,8 +72,8 @@ void main() {
       child: RenderLimitedBox(
         maxWidth: 100.0,
         maxHeight: 200.0,
-        child: child
-      )
+        child: child,
+      ),
     );
     layout(parent);
     expect(child.size.width, 100.0);
@@ -90,8 +92,8 @@ void main() {
       child: RenderLimitedBox(
         maxWidth: 100.0,
         maxHeight: 200.0,
-        child: child
-      )
+        child: child,
+      ),
     );
     layout(parent);
 
@@ -109,7 +111,7 @@ void main() {
       child: box = RenderLimitedBox(
         maxWidth: 100.0,
         maxHeight: 200.0,
-      )
+      ),
     );
     layout(parent);
     expect(box.size, const Size(10.0, 0.0));
@@ -118,7 +120,7 @@ void main() {
     expect(
       parent.toStringDeep(minLevel: DiagnosticLevel.info),
       equalsIgnoringHashCodes(
-        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT\n'
+        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE\n'
         ' │ parentData: <none>\n'
         ' │ constraints: BoxConstraints(w=800.0, h=600.0)\n'
         ' │ size: Size(800.0, 600.0)\n'
@@ -145,7 +147,7 @@ void main() {
         child: box = RenderLimitedBox(
           maxWidth: 100.0,
           maxHeight: 200.0,
-        )
+        ),
     );
     layout(parent);
     expect(box.size, const Size(10.0, 600.0));
@@ -154,7 +156,7 @@ void main() {
     expect(
       parent.toStringDeep(minLevel: DiagnosticLevel.info),
       equalsIgnoringHashCodes(
-        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT\n'
+        'RenderConstrainedOverflowBox#00000 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE\n'
         ' │ parentData: <none>\n'
         ' │ constraints: BoxConstraints(w=800.0, h=600.0)\n'
         ' │ size: Size(800.0, 600.0)\n'

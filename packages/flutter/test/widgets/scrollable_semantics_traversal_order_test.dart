@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:ui';
 
@@ -65,6 +67,9 @@ void main() {
                   TestSemantics(
                     scrollIndex: 15,
                     scrollChildren: 30,
+                    flags: <SemanticsFlag>[
+                      SemanticsFlag.hasImplicitScrolling,
+                    ],
                     actions: <SemanticsAction>[
                       SemanticsAction.scrollUp,
                       SemanticsAction.scrollDown,
@@ -98,7 +103,7 @@ void main() {
                             label: 'item 14b',
                             textDirection: TextDirection.ltr,
                           ),
-                        ]
+                        ],
                       ),
                       TestSemantics(
                         children: <TestSemantics>[
@@ -234,6 +239,9 @@ void main() {
               TestSemantics(
                 children: <TestSemantics>[
                   TestSemantics(
+                    flags: <SemanticsFlag>[
+                      SemanticsFlag.hasImplicitScrolling,
+                    ],
                     actions: <SemanticsAction>[
                       SemanticsAction.scrollUp,
                       SemanticsAction.scrollDown,
@@ -360,8 +368,13 @@ void main() {
               TestSemantics(
                 children: <TestSemantics>[
                   TestSemantics(
-                    actions: <SemanticsAction>[SemanticsAction.scrollUp,
-                    SemanticsAction.scrollDown],
+                    flags: <SemanticsFlag>[
+                      SemanticsFlag.hasImplicitScrolling,
+                    ],
+                    actions: <SemanticsAction>[
+                      SemanticsAction.scrollUp,
+                      SemanticsAction.scrollDown,
+                    ],
                     children: <TestSemantics>[
                       TestSemantics(
                         flags: <SemanticsFlag>[SemanticsFlag.isHidden],
@@ -492,6 +505,9 @@ void main() {
               TestSemantics(
                 children: <TestSemantics>[
                   TestSemantics(
+                    flags: <SemanticsFlag>[
+                      SemanticsFlag.hasImplicitScrolling,
+                    ],
                     actions: <SemanticsAction>[
                       SemanticsAction.scrollUp,
                       SemanticsAction.scrollDown,
@@ -624,6 +640,9 @@ void main() {
             textDirection: TextDirection.ltr,
             children: <TestSemantics>[
               TestSemantics(
+                flags: <SemanticsFlag>[
+                  SemanticsFlag.hasImplicitScrolling,
+                ],
                 actions: <SemanticsAction>[
                   SemanticsAction.scrollUp,
                   SemanticsAction.scrollDown,
@@ -760,6 +779,9 @@ void main() {
               TestSemantics(
                 children: <TestSemantics>[
                   TestSemantics(
+                    flags: <SemanticsFlag>[
+                      SemanticsFlag.hasImplicitScrolling,
+                    ],
                     actions: <SemanticsAction>[
                       SemanticsAction.scrollUp,
                       SemanticsAction.scrollDown,

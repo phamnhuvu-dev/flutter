@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/foundation.dart';
 import 'package:quiver/testing/async.dart';
@@ -12,29 +14,29 @@ void main() {
   test('debugPrint', () {
     expect(
       captureOutput(() { debugPrintSynchronously('Hello, world'); }),
-      equals(<String>['Hello, world'])
+      equals(<String>['Hello, world']),
     );
 
     expect(
       captureOutput(() { debugPrintSynchronously('Hello, world', wrapWidth: 10); }),
-      equals(<String>['Hello,\nworld'])
+      equals(<String>['Hello,\nworld']),
     );
 
     for (int i = 0; i < 14; ++i) {
       expect(
         captureOutput(() { debugPrintSynchronously('Hello,   world', wrapWidth: i); }),
-        equals(<String>['Hello,\nworld'])
+        equals(<String>['Hello,\nworld']),
       );
     }
 
     expect(
       captureOutput(() { debugPrintThrottled('Hello, world'); }),
-      equals(<String>['Hello, world'])
+      equals(<String>['Hello, world']),
     );
 
     expect(
       captureOutput(() { debugPrintThrottled('Hello, world', wrapWidth: 10); }),
-      equals(<String>['Hello,', 'world'])
+      equals(<String>['Hello,', 'world']),
     );
   });
 
@@ -56,5 +58,17 @@ void main() {
       async.elapse(const Duration(seconds: 2));
       expect(log.length, 2);
     });
+  });
+
+  test('debugPrint can print null', () {
+    expect(
+      captureOutput(() { debugPrintThrottled(null); }),
+      equals(<String>['null']),
+    );
+
+    expect(
+      captureOutput(() { debugPrintThrottled(null, wrapWidth: 80); }),
+      equals(<String>['null']),
+    );
   });
 }

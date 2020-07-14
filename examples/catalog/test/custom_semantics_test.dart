@@ -1,4 +1,4 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -18,10 +18,7 @@ void main() {
     await tester.pump();
 
     // Verify it correctly exposes its semantics.
-    // TODO(goderbauer): Use `SemanticsTester` after https://github.com/flutter/flutter/issues/12286.
-    final SemanticsNode semantics = tester
-        .renderObject(find.byType(AdjustableDropdownListTile))
-        .debugSemantics;
+    final SemanticsNode semantics = tester.getSemantics(find.byType(AdjustableDropdownListTile));
 
     expectAdjustable(semantics,
       hasIncreaseAction: true,
@@ -91,7 +88,8 @@ void main() {
   });
 }
 
-void expectAdjustable(SemanticsNode node, {
+void expectAdjustable(
+  SemanticsNode node, {
   bool hasIncreaseAction = true,
   bool hasDecreaseAction = true,
   String label = '',

@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:async';
 import 'dart:typed_data';
@@ -19,7 +21,7 @@ class SquareImage implements ui.Image {
   int get height => 10;
 
   @override
-  Future<ByteData> toByteData({ui.ImageByteFormat format}) async {
+  Future<ByteData> toByteData({ ui.ImageByteFormat format = ui.ImageByteFormat.rawRgba }) async {
     throw UnsupportedError('Cannot encode test image');
   }
 
@@ -38,7 +40,7 @@ class WideImage implements ui.Image {
   int get height => 10;
 
   @override
-  Future<ByteData> toByteData({ui.ImageByteFormat format}) async {
+  Future<ByteData> toByteData({ ui.ImageByteFormat format = ui.ImageByteFormat.rawRgba }) async {
     throw UnsupportedError('Cannot encode test image');
   }
 
@@ -57,7 +59,7 @@ class TallImage implements ui.Image {
   int get height => 20;
 
   @override
-  Future<ByteData> toByteData({ui.ImageByteFormat format}) async {
+  Future<ByteData> toByteData({ ui.ImageByteFormat format = ui.ImageByteFormat.rawRgba }) async {
     throw UnsupportedError('Cannot encode test image');
   }
 
@@ -93,6 +95,7 @@ void main() {
         '   image: [10×10]\n'
         '   alignment: center\n'
         '   invertColors: false\n'
+        '   filterQuality: low\n'
       ),
     );
 

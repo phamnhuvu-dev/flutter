@@ -1,19 +1,40 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
 import 'dart:async';
+import 'dart:math';
+import 'dart:ui' show lerpDouble, ImageFilter;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/animation.dart' show Curves;
+
+import 'colors.dart';
+import 'interface_level.dart';
+import 'localizations.dart';
 
 const double _kBackGestureWidth = 20.0;
 const double _kMinFlingVelocity = 1.0; // Screen widths per second.
 
+// An eyeballed value for the maximum time it takes for a page to animate forward
+// if the user releases a page mid swipe.
+const int _kMaxDroppedSwipePageForwardAnimationTime = 800; // Milliseconds.
+
+// The maximum time for a page to get reset to it's original position if the
+// user releases a page mid swipe.
+const int _kMaxPageBackAnimationTime = 300; // Milliseconds.
+
 // Barrier color for a Cupertino modal barrier.
-const Color _kModalBarrierColor = Color(0x6604040F);
+// Extracted from https://developer.apple.com/design/resources/.
+const Color _kModalBarrierColor = CupertinoDynamicColor.withBrightness(
+  color: Color(0x33000000),
+  darkColor: Color(0x7A000000),
+);
 
 // The duration of the transition used when a modal popup is shown.
 const Duration _kModalPopupTransitionDuration = Duration(milliseconds: 335);
@@ -50,65 +71,42 @@ final DecorationTween _kGradientShadowTween = DecorationTween(
         Color(0x00000000),
         Color(0x04000000),
         Color(0x12000000),
-        Color(0x38000000)
+        Color(0x38000000),
       ],
       stops: <double>[0.0, 0.3, 0.6, 1.0],
     ),
   ),
 );
 
-/// A modal route that replaces the entire screen with an iOS transition.
+/// A mixin that replaces the entire screen with an iOS transition for a
+/// [PageRoute].
 ///
+/// {@template flutter.cupertino.cupertinoRouteTransitionMixin}
 /// The page slides in from the right and exits in reverse. The page also shifts
 /// to the left in parallax when another page enters to cover it.
 ///
 /// The page slides in from the bottom and exits in reverse with no parallax
 /// effect for fullscreen dialogs.
-///
-/// By default, when a modal route is replaced by another, the previous route
-/// remains in memory. To free all the resources when this is not necessary, set
-/// [maintainState] to false.
-///
-/// The type `T` specifies the return type of the route which can be supplied as
-/// the route is popped from the stack via [Navigator.pop] when an optional
-/// `result` can be provided.
+/// {@endtemplate}
 ///
 /// See also:
 ///
-///  * [MaterialPageRoute], for an adaptive [PageRoute] that uses a
-///    platform-appropriate transition.
-///  * [CupertinoPageScaffold], for applications that have one page with a fixed
-///    navigation bar on top.
-///  * [CupertinoTabScaffold], for applications that have a tab bar at the
-///    bottom with multiple pages.
-class CupertinoPageRoute<T> extends PageRoute<T> {
-  /// Creates a page route for use in an iOS designed app.
-  ///
-  /// The [builder], [maintainState], and [fullscreenDialog] arguments must not
-  /// be null.
-  CupertinoPageRoute({
-    @required this.builder,
-    this.title,
-    RouteSettings settings,
-    this.maintainState = true,
-    bool fullscreenDialog = false,
-  }) : assert(builder != null),
-       assert(maintainState != null),
-       assert(fullscreenDialog != null),
-       super(settings: settings, fullscreenDialog: fullscreenDialog) {
-    // ignore: prefer_asserts_in_initializer_lists, https://github.com/dart-lang/sdk/issues/31223
-    assert(opaque); // PageRoute makes it return true.
-  }
-
+///  * [MaterialRouteTransitionMixin], which is a mixin that provides
+///    platform-appropriate transitions for a [PageRoute]
+///  * [CupertinoPageRoute], which is a [PageRoute] that leverages this mixin.
+mixin CupertinoRouteTransitionMixin<T> on PageRoute<T> {
   /// Builds the primary contents of the route.
-  final WidgetBuilder builder;
+  WidgetBuilder get builder;
 
+  /// {@template flutter.cupertino.cupertinoRouteTransitionMixin.title}
   /// A title string for this route.
   ///
-  /// Used to autopopulate [CupertinoNavigationBar] and
+  /// Used to auto-populate [CupertinoNavigationBar] and
   /// [CupertinoSliverNavigationBar]'s `middle`/`largeTitle` widgets when
   /// one is not manually supplied.
-  final String title;
+  /// {@endtemplate}
+  String get title;
+
 
   ValueNotifier<String> _previousTitle;
 
@@ -136,9 +134,9 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
 
   @override
   void didChangePrevious(Route<dynamic> previousRoute) {
-    final String previousTitleString = previousRoute is CupertinoPageRoute
-        ? previousRoute.title
-        : null;
+    final String previousTitleString = previousRoute is CupertinoRouteTransitionMixin
+      ? previousRoute.title
+      : null;
     if (_previousTitle == null) {
       _previousTitle = ValueNotifier<String>(previousTitleString);
     } else {
@@ -148,10 +146,8 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
   }
 
   @override
-  final bool maintainState;
-
-  @override
-  Duration get transitionDuration => const Duration(milliseconds: 350);
+  // A relatively rigorous eyeball estimation.
+  Duration get transitionDuration => const Duration(milliseconds: 400);
 
   @override
   Color get barrierColor => null;
@@ -160,32 +156,24 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
   String get barrierLabel => null;
 
   @override
-  bool canTransitionFrom(TransitionRoute<dynamic> previousRoute) {
-    return previousRoute is CupertinoPageRoute;
-  }
-
-  @override
   bool canTransitionTo(TransitionRoute<dynamic> nextRoute) {
     // Don't perform outgoing animation if the next route is a fullscreen dialog.
-    return nextRoute is CupertinoPageRoute && !nextRoute.fullscreenDialog;
+    return nextRoute is CupertinoRouteTransitionMixin && !nextRoute.fullscreenDialog;
   }
 
-  @override
-  void dispose() {
-    _popGestureInProgress.remove(this);
-    super.dispose();
-  }
-
-  /// True if a Cupertino pop gesture is currently underway for [route].
+  /// True if an iOS-style back swipe pop gesture is currently underway for [route].
+  ///
+  /// This just check the route's [NavigatorState.userGestureInProgress].
   ///
   /// See also:
   ///
   ///  * [popGestureEnabled], which returns true if a user-triggered pop gesture
   ///    would be allowed.
-  static bool isPopGestureInProgress(PageRoute<dynamic> route) => _popGestureInProgress.contains(route);
-  static final Set<PageRoute<dynamic>> _popGestureInProgress = Set<PageRoute<dynamic>>();
+  static bool isPopGestureInProgress(PageRoute<dynamic> route) {
+    return route.navigator.userGestureInProgress;
+  }
 
-  /// True if a Cupertino pop gesture is currently underway for this route.
+  /// True if an iOS-style back swipe pop gesture is currently underway for this route.
   ///
   /// See also:
   ///
@@ -219,14 +207,19 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
     // with forms, then do not allow the user to dismiss the route with a swipe.
     if (route.hasScopedWillPopCallback)
       return false;
-    // Fullscreen dialogs aren't dismissable by back swipe.
+    // Fullscreen dialogs aren't dismissible by back swipe.
     if (route.fullscreenDialog)
       return false;
     // If we're in an animation already, we cannot be manually swiped.
-    if (route.controller.status != AnimationStatus.completed)
+    if (route.animation.status != AnimationStatus.completed)
+      return false;
+    // If we're being popped into, we also cannot be swiped until the pop above
+    // it completes. This translates to our secondary animation being
+    // dismissed.
+    if (route.secondaryAnimation.status != AnimationStatus.dismissed)
       return false;
     // If we're in a gesture already, we cannot start another.
-    if (_popGestureInProgress.contains(route))
+    if (isPopGestureInProgress(route))
       return false;
 
     // Looks like a back gesture would be welcome!
@@ -235,17 +228,18 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+    final Widget child = builder(context);
     final Widget result = Semantics(
       scopesRoute: true,
       explicitChildNodes: true,
-      child: builder(context),
+      child: child,
     );
     assert(() {
-      if (result == null) {
-        throw FlutterError(
-          'The builder for route "${settings.name}" returned null.\n'
-          'Route builders must never return null.'
-        );
+      if (child == null) {
+        throw FlutterError.fromParts(<DiagnosticsNode>[
+          ErrorSummary('The builder for route "${settings.name}" returned null.'),
+          ErrorDescription('Route builders must never return null.'),
+        ]);
       }
       return true;
     }());
@@ -253,24 +247,15 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
   }
 
   // Called by _CupertinoBackGestureDetector when a pop ("back") drag start
-  // gesture is detected. The returned controller handles all of the subsquent
+  // gesture is detected. The returned controller handles all of the subsequent
   // drag events.
   static _CupertinoBackGestureController<T> _startPopGesture<T>(PageRoute<T> route) {
-    assert(!_popGestureInProgress.contains(route));
     assert(_isPopGestureEnabled(route));
-    _popGestureInProgress.add(route);
 
-    _CupertinoBackGestureController<T> backController;
-    backController = _CupertinoBackGestureController<T>(
+    return _CupertinoBackGestureController<T>(
       navigator: route.navigator,
-      controller: route.controller,
-      onEnded: () {
-        backController?.dispose();
-        backController = null;
-        _popGestureInProgress.remove(route);
-      },
+      controller: route.controller, // protected access
     );
-    return backController;
   }
 
   /// Returns a [CupertinoFullscreenDialogTransition] if [route] is a full
@@ -294,18 +279,24 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    // Check if the route has an animation that's currently participating
+    // in a back swipe gesture.
+    //
+    // In the middle of a back gesture drag, let the transition be linear to
+    // match finger motions.
+    final bool linearTransition = isPopGestureInProgress(route);
     if (route.fullscreenDialog) {
       return CupertinoFullscreenDialogTransition(
-        animation: animation,
+        primaryRouteAnimation: animation,
+        secondaryRouteAnimation: secondaryAnimation,
         child: child,
+        linearTransition: linearTransition,
       );
     } else {
       return CupertinoPageTransition(
         primaryRouteAnimation: animation,
         secondaryRouteAnimation: secondaryAnimation,
-        // In the middle of a back gesture drag, let the transition be linear to
-        // match finger motions.
-        linearTransition: _popGestureInProgress.contains(route),
+        linearTransition: linearTransition,
         child: _CupertinoBackGestureDetector<T>(
           enabledCallback: () => _isPopGestureEnabled<T>(route),
           onStartPopGesture: () => _startPopGesture<T>(route),
@@ -319,9 +310,137 @@ class CupertinoPageRoute<T> extends PageRoute<T> {
   Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
     return buildPageTransitions<T>(this, context, animation, secondaryAnimation, child);
   }
+}
+
+/// A modal route that replaces the entire screen with an iOS transition.
+///
+/// {@macro flutter.cupertino.cupertinoRouteTransitionMixin}
+///
+/// By default, when a modal route is replaced by another, the previous route
+/// remains in memory. To free all the resources when this is not necessary, set
+/// [maintainState] to false.
+///
+/// The type `T` specifies the return type of the route which can be supplied as
+/// the route is popped from the stack via [Navigator.pop] when an optional
+/// `result` can be provided.
+///
+/// See also:
+///
+///  * [CupertinoRouteTransitionMixin], for a mixin that provides iOS transition
+///    for this modal route.
+///  * [MaterialPageRoute], for an adaptive [PageRoute] that uses a
+///    platform-appropriate transition.
+///  * [CupertinoPageScaffold], for applications that have one page with a fixed
+///    navigation bar on top.
+///  * [CupertinoTabScaffold], for applications that have a tab bar at the
+///    bottom with multiple pages.
+///  * [CupertinoPage], for a [Page] version of this class.
+class CupertinoPageRoute<T> extends PageRoute<T> with CupertinoRouteTransitionMixin<T> {
+  /// Creates a page route for use in an iOS designed app.
+  ///
+  /// The [builder], [maintainState], and [fullscreenDialog] arguments must not
+  /// be null.
+  CupertinoPageRoute({
+    @required this.builder,
+    this.title,
+    RouteSettings settings,
+    this.maintainState = true,
+    bool fullscreenDialog = false,
+  }) : assert(builder != null),
+       assert(maintainState != null),
+       assert(fullscreenDialog != null),
+       assert(opaque),
+       super(settings: settings, fullscreenDialog: fullscreenDialog);
+
+  @override
+  final WidgetBuilder builder;
+
+  @override
+  final String title;
+
+  @override
+  final bool maintainState;
 
   @override
   String get debugLabel => '${super.debugLabel}(${settings.name})';
+}
+
+// A page-based version of CupertinoPageRoute.
+//
+// This route uses the builder from the page to build its content. This ensures
+// the content is up to date after page updates.
+class _PageBasedCupertinoPageRoute<T> extends PageRoute<T> with CupertinoRouteTransitionMixin<T> {
+  _PageBasedCupertinoPageRoute({
+    @required CupertinoPage<T> page,
+  }) : assert(page != null),
+       assert(opaque),
+       super(settings: page);
+
+  CupertinoPage<T> get _page => settings as CupertinoPage<T>;
+
+  @override
+  WidgetBuilder get builder => _page.builder;
+
+  @override
+  String get title => _page.title;
+
+  @override
+  bool get maintainState => _page.maintainState;
+
+  @override
+  bool get fullscreenDialog => _page.fullscreenDialog;
+
+  @override
+  String get debugLabel => '${super.debugLabel}(${_page.name})';
+}
+
+/// A page that creates a cupertino style [PageRoute].
+///
+/// {@macro flutter.cupertino.cupertinoRouteTransitionMixin}
+///
+/// By default, when a created modal route is replaced by another, the previous
+/// route remains in memory. To free all the resources when this is not
+/// necessary, set [maintainState] to false.
+///
+/// The type `T` specifies the return type of the route which can be supplied as
+/// the route is popped from the stack via [Navigator.transitionDelegate] by
+/// providing the optional `result` argument to the
+/// [RouteTransitionRecord.markForPop] in the [TransitionDelegate.resolve].
+///
+/// See also:
+///
+///  * [CupertinoPageRoute], for a [PageRoute] version of this class.
+class CupertinoPage<T> extends Page<T> {
+  /// Creates a cupertino page.
+  const CupertinoPage({
+    @required this.builder,
+    this.maintainState = true,
+    this.title,
+    this.fullscreenDialog = false,
+    LocalKey key,
+    String name,
+    Object arguments,
+  }) : assert(builder != null),
+       assert(maintainState != null),
+       assert(fullscreenDialog != null),
+       super(key: key, name: name, arguments: arguments);
+
+  /// Builds the primary contents of the route.
+  final WidgetBuilder builder;
+
+  /// {@macro flutter.cupertino.cupertinoRouteTransitionMixin.title}
+  final String title;
+
+  /// {@macro flutter.widgets.modalRoute.maintainState}
+  final bool maintainState;
+
+  /// {@macro flutter.widgets.pageRoute.fullscreenDialog}
+  final bool fullscreenDialog;
+
+  @override
+  Route<T> createRoute(BuildContext context) {
+    return _PageBasedCupertinoPageRoute<T>(page: this);
+  }
 }
 
 /// Provides an iOS-style page transition animation.
@@ -335,7 +454,7 @@ class CupertinoPageTransition extends StatelessWidget {
   ///    when this screen is being pushed.
   ///  * `secondaryRouteAnimation` is a linear route animation from 0.0 to 1.0
   ///    when another screen is being pushed on top of this one.
-  ///  * `linearTransition` is whether to perform primary transition linearly.
+  ///  * `linearTransition` is whether to perform the transitions linearly.
   ///    Used to precisely track back gesture drags.
   CupertinoPageTransition({
     Key key,
@@ -344,22 +463,38 @@ class CupertinoPageTransition extends StatelessWidget {
     @required this.child,
     @required bool linearTransition,
   }) : assert(linearTransition != null),
-       _primaryPositionAnimation = (linearTransition ? primaryRouteAnimation :
-         CurvedAnimation(
-           parent: primaryRouteAnimation,
-           curve: Curves.easeOut,
-           reverseCurve: Curves.easeIn,
-         )
-       ).drive(_kRightMiddleTween),
-       _secondaryPositionAnimation = CurvedAnimation(
-         parent: secondaryRouteAnimation,
-         curve: Curves.easeOut,
-         reverseCurve: Curves.easeIn,
-       ).drive(_kMiddleLeftTween),
-       _primaryShadowAnimation = CurvedAnimation(
-         parent: primaryRouteAnimation,
-         curve: Curves.easeOut,
-       ).drive(_kGradientShadowTween),
+       _primaryPositionAnimation =
+           (linearTransition
+             ? primaryRouteAnimation
+             : CurvedAnimation(
+                 // The curves below have been rigorously derived from plots of native
+                 // iOS animation frames. Specifically, a video was taken of a page
+                 // transition animation and the distance in each frame that the page
+                 // moved was measured. A best fit bezier curve was the fitted to the
+                 // point set, which is linearToEaseIn. Conversely, easeInToLinear is the
+                 // reflection over the origin of linearToEaseIn.
+                 parent: primaryRouteAnimation,
+                 curve: Curves.linearToEaseOut,
+                 reverseCurve: Curves.easeInToLinear,
+               )
+           ).drive(_kRightMiddleTween),
+       _secondaryPositionAnimation =
+           (linearTransition
+             ? secondaryRouteAnimation
+             : CurvedAnimation(
+                 parent: secondaryRouteAnimation,
+                 curve: Curves.linearToEaseOut,
+                 reverseCurve: Curves.easeInToLinear,
+               )
+           ).drive(_kMiddleLeftTween),
+       _primaryShadowAnimation =
+           (linearTransition
+             ? primaryRouteAnimation
+             : CurvedAnimation(
+                 parent: primaryRouteAnimation,
+                 curve: Curves.linearToEaseOut,
+               )
+           ).drive(_kGradientShadowTween),
        super(key: key);
 
   // When this page is coming in to cover another page.
@@ -397,25 +532,56 @@ class CupertinoPageTransition extends StatelessWidget {
 /// screen from the bottom.
 class CupertinoFullscreenDialogTransition extends StatelessWidget {
   /// Creates an iOS-style transition used for summoning fullscreen dialogs.
+  ///
+  ///  * `primaryRouteAnimation` is a linear route animation from 0.0 to 1.0
+  ///    when this screen is being pushed.
+  ///  * `secondaryRouteAnimation` is a linear route animation from 0.0 to 1.0
+  ///    when another screen is being pushed on top of this one.
+  ///  * `linearTransition` is whether to perform the secondary transition linearly.
+  ///    Used to precisely track back gesture drags.
   CupertinoFullscreenDialogTransition({
     Key key,
-    @required Animation<double> animation,
+    @required Animation<double> primaryRouteAnimation,
+    @required Animation<double> secondaryRouteAnimation,
     @required this.child,
-  }) : _positionAnimation = animation
-         .drive(CurveTween(curve: Curves.easeInOut))
-         .drive(_kBottomUpTween),
+    @required bool linearTransition,
+  }) : _positionAnimation = CurvedAnimation(
+         parent: primaryRouteAnimation,
+         curve: Curves.linearToEaseOut,
+         // The curve must be flipped so that the reverse animation doesn't play
+         // an ease-in curve, which iOS does not use.
+         reverseCurve: Curves.linearToEaseOut.flipped,
+       ).drive(_kBottomUpTween),
+       _secondaryPositionAnimation =
+           (linearTransition
+             ? secondaryRouteAnimation
+             : CurvedAnimation(
+                 parent: secondaryRouteAnimation,
+                 curve: Curves.linearToEaseOut,
+                 reverseCurve: Curves.easeInToLinear,
+               )
+           ).drive(_kMiddleLeftTween),
        super(key: key);
 
   final Animation<Offset> _positionAnimation;
+  // When this page is becoming covered by another page.
+  final Animation<Offset> _secondaryPositionAnimation;
 
   /// The widget below this widget in the tree.
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
+    assert(debugCheckHasDirectionality(context));
+    final TextDirection textDirection = Directionality.of(context);
     return SlideTransition(
-      position: _positionAnimation,
-      child: child,
+      position: _secondaryPositionAnimation,
+      textDirection: textDirection,
+      transformHitTests: false,
+      child: SlideTransition(
+        position: _positionAnimation,
+        child: child,
+      ),
     );
   }
 }
@@ -518,13 +684,19 @@ class _CupertinoBackGestureDetectorState<T> extends State<_CupertinoBackGestureD
   @override
   Widget build(BuildContext context) {
     assert(debugCheckHasDirectionality(context));
+    // For devices with notches, the drag area needs to be larger on the side
+    // that has the notch.
+    double dragAreaWidth = Directionality.of(context) == TextDirection.ltr ?
+                           MediaQuery.of(context).padding.left :
+                           MediaQuery.of(context).padding.right;
+    dragAreaWidth = max(dragAreaWidth, _kBackGestureWidth);
     return Stack(
       fit: StackFit.passthrough,
       children: <Widget>[
         widget.child,
         PositionedDirectional(
           start: 0.0,
-          width: _kBackGestureWidth,
+          width: dragAreaWidth,
           top: 0.0,
           bottom: 0.0,
           child: Listener(
@@ -556,23 +728,13 @@ class _CupertinoBackGestureController<T> {
   _CupertinoBackGestureController({
     @required this.navigator,
     @required this.controller,
-    @required this.onEnded,
   }) : assert(navigator != null),
-       assert(controller != null),
-       assert(onEnded != null) {
+       assert(controller != null) {
     navigator.didStartUserGesture();
   }
 
-  /// The navigator that this object is controlling.
-  final NavigatorState navigator;
-
-  /// The animation controller that the route uses to drive its transition
-  /// animation.
   final AnimationController controller;
-
-  final VoidCallback onEnded;
-
-  bool _animating = false;
+  final NavigatorState navigator;
 
   /// The drag gesture has changed by [fractionalDelta]. The total range of the
   /// drag should be 0.0 to 1.0.
@@ -586,35 +748,54 @@ class _CupertinoBackGestureController<T> {
     // Fling in the appropriate direction.
     // AnimationController.fling is guaranteed to
     // take at least one frame.
-    if (velocity.abs() >= _kMinFlingVelocity) {
-      controller.fling(velocity: -velocity);
-    } else if (controller.value <= 0.5) {
-      controller.fling(velocity: -1.0);
+    //
+    // This curve has been determined through rigorously eyeballing native iOS
+    // animations.
+    const Curve animationCurve = Curves.fastLinearToSlowEaseIn;
+    bool animateForward;
+
+    // If the user releases the page before mid screen with sufficient velocity,
+    // or after mid screen, we should animate the page out. Otherwise, the page
+    // should be animated back in.
+    if (velocity.abs() >= _kMinFlingVelocity)
+      animateForward = velocity <= 0;
+    else
+      animateForward = controller.value > 0.5;
+
+    if (animateForward) {
+      // The closer the panel is to dismissing, the shorter the animation is.
+      // We want to cap the animation time, but we want to use a linear curve
+      // to determine it.
+      final int droppedPageForwardAnimationTime = min(
+        lerpDouble(_kMaxDroppedSwipePageForwardAnimationTime, 0, controller.value).floor(),
+        _kMaxPageBackAnimationTime,
+      );
+      controller.animateTo(1.0, duration: Duration(milliseconds: droppedPageForwardAnimationTime), curve: animationCurve);
     } else {
-      controller.fling(velocity: 1.0);
+      // This route is destined to pop at this point. Reuse navigator's pop.
+      navigator.pop();
+
+      // The popping may have finished inline if already at the target destination.
+      if (controller.isAnimating) {
+        // Otherwise, use a custom popping animation duration and curve.
+        final int droppedPageBackAnimationTime = lerpDouble(0, _kMaxDroppedSwipePageForwardAnimationTime, controller.value).floor();
+        controller.animateBack(0.0, duration: Duration(milliseconds: droppedPageBackAnimationTime), curve: animationCurve);
+      }
     }
-    assert(controller.isAnimating);
-    assert(controller.status != AnimationStatus.completed);
-    assert(controller.status != AnimationStatus.dismissed);
 
-    // Don't end the gesture until the transition completes.
-    _animating = true;
-    controller.addStatusListener(_handleStatusChanged);
-  }
-
-  void _handleStatusChanged(AnimationStatus status) {
-    assert(_animating);
-    controller.removeStatusListener(_handleStatusChanged);
-    _animating = false;
-    if (status == AnimationStatus.dismissed)
-      navigator.pop<T>(); // this will cause the route to get disposed, which will dispose us
-    onEnded(); // this will call dispose if popping the route failed to do so
-  }
-
-  void dispose() {
-    if (_animating)
-      controller.removeStatusListener(_handleStatusChanged);
-    navigator.didStopUserGesture();
+    if (controller.isAnimating) {
+      // Keep the userGestureInProgress in true state so we don't change the
+      // curve of the page transition mid-flight since CupertinoPageTransition
+      // depends on userGestureInProgress.
+      AnimationStatusListener animationStatusCallback;
+      animationStatusCallback = (AnimationStatus status) {
+        navigator.didStopUserGesture();
+        controller.removeStatusListener(animationStatusCallback);
+      };
+      controller.addStatusListener(animationStatusCallback);
+    } else {
+      navigator.didStopUserGesture();
+    }
   }
 }
 
@@ -672,29 +853,29 @@ class _CupertinoEdgeShadowDecoration extends Decoration {
 
   @override
   _CupertinoEdgeShadowDecoration lerpFrom(Decoration a, double t) {
-    if (a is! _CupertinoEdgeShadowDecoration)
-      return _CupertinoEdgeShadowDecoration.lerp(null, this, t);
-    return _CupertinoEdgeShadowDecoration.lerp(a, this, t);
+    if (a is _CupertinoEdgeShadowDecoration)
+      return _CupertinoEdgeShadowDecoration.lerp(a, this, t);
+    return _CupertinoEdgeShadowDecoration.lerp(null, this, t);
   }
 
   @override
   _CupertinoEdgeShadowDecoration lerpTo(Decoration b, double t) {
-    if (b is! _CupertinoEdgeShadowDecoration)
-      return _CupertinoEdgeShadowDecoration.lerp(this, null, t);
-    return _CupertinoEdgeShadowDecoration.lerp(this, b, t);
+    if (b is _CupertinoEdgeShadowDecoration)
+      return _CupertinoEdgeShadowDecoration.lerp(this, b, t);
+    return _CupertinoEdgeShadowDecoration.lerp(this, null, t);
   }
 
   @override
-  _CupertinoEdgeShadowPainter createBoxPainter([VoidCallback onChanged]) {
+  _CupertinoEdgeShadowPainter createBoxPainter([ VoidCallback onChanged ]) {
     return _CupertinoEdgeShadowPainter(this, onChanged);
   }
 
   @override
-  bool operator ==(dynamic other) {
-    if (runtimeType != other.runtimeType)
+  bool operator ==(Object other) {
+    if (other.runtimeType != runtimeType)
       return false;
-    final _CupertinoEdgeShadowDecoration typedOther = other;
-    return edgeGradient == typedOther.edgeGradient;
+    return other is _CupertinoEdgeShadowDecoration
+        && other.edgeGradient == edgeGradient;
   }
 
   @override
@@ -745,24 +926,33 @@ class _CupertinoEdgeShadowPainter extends BoxPainter {
 
 class _CupertinoModalPopupRoute<T> extends PopupRoute<T> {
   _CupertinoModalPopupRoute({
-    this.builder,
+    this.barrierColor,
     this.barrierLabel,
+    this.builder,
+    bool semanticsDismissible,
+    ImageFilter filter,
     RouteSettings settings,
-  }) : super(settings: settings);
+  }) : super(
+         filter: filter,
+         settings: settings,
+       ) {
+    _semanticsDismissible = semanticsDismissible;
+  }
 
   final WidgetBuilder builder;
+  bool _semanticsDismissible;
 
   @override
   final String barrierLabel;
 
   @override
-  Color get barrierColor => _kModalBarrierColor;
+  final Color barrierColor;
 
   @override
   bool get barrierDismissible => true;
 
   @override
-  bool get semanticsDismissible => false;
+  bool get semanticsDismissible => _semanticsDismissible ?? false;
 
   @override
   Duration get transitionDuration => _kModalPopupTransitionDuration;
@@ -776,8 +966,11 @@ class _CupertinoModalPopupRoute<T> extends PopupRoute<T> {
     assert(_animation == null);
     _animation = CurvedAnimation(
       parent: super.createAnimation(),
-      curve: Curves.ease,
-      reverseCurve: Curves.ease.flipped,
+
+      // These curves were initially measured from native iOS horizontal page
+      // route animations and seemed to be a good match here as well.
+      curve: Curves.linearToEaseOut,
+      reverseCurve: Curves.linearToEaseOut.flipped,
     );
     _offsetTween = Tween<Offset>(
       begin: const Offset(0.0, 1.0),
@@ -788,7 +981,10 @@ class _CupertinoModalPopupRoute<T> extends PopupRoute<T> {
 
   @override
   Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
-    return builder(context);
+    return CupertinoUserInterfaceLevel(
+      data: CupertinoUserInterfaceLevelData.elevated,
+      child: Builder(builder: builder),
+    );
   }
 
   @override
@@ -812,6 +1008,13 @@ class _CupertinoModalPopupRoute<T> extends PopupRoute<T> {
 /// It is only used when the method is called. Its corresponding widget can be
 /// safely removed from the tree before the popup is closed.
 ///
+/// The `useRootNavigator` argument is used to determine whether to push the
+/// popup to the [Navigator] furthest from or nearest to the given `context`. It
+/// is `false` by default.
+///
+/// The `semanticsDismissible` argument is used to determine whether the
+/// semantics of the modal barrier are included in the semantics tree.
+///
 /// The `builder` argument typically builds a [CupertinoActionSheet] widget.
 /// Content below the widget is dimmed with a [ModalBarrier]. The widget built
 /// by the `builder` does not share a context with the location that
@@ -824,23 +1027,33 @@ class _CupertinoModalPopupRoute<T> extends PopupRoute<T> {
 ///
 /// See also:
 ///
-///  * [ActionSheet], which is the widget usually returned by the `builder`
-///    argument to [showCupertinoModalPopup].
+///  * [CupertinoActionSheet], which is the widget usually returned by the
+///    `builder` argument to [showCupertinoModalPopup].
 ///  * <https://developer.apple.com/design/human-interface-guidelines/ios/views/action-sheets/>
 Future<T> showCupertinoModalPopup<T>({
   @required BuildContext context,
   @required WidgetBuilder builder,
+  ImageFilter filter,
+  bool useRootNavigator = true,
+  bool semanticsDismissible,
 }) {
-  return Navigator.of(context, rootNavigator: true).push(
+  assert(useRootNavigator != null);
+  return Navigator.of(context, rootNavigator: useRootNavigator).push(
     _CupertinoModalPopupRoute<T>(
-      builder: builder,
+      barrierColor: CupertinoDynamicColor.resolve(_kModalBarrierColor, context),
       barrierLabel: 'Dismiss',
+      builder: builder,
+      filter: filter,
+      semanticsDismissible: semanticsDismissible,
     ),
   );
 }
 
-final Animatable<double> _dialogTween = Tween<double>(begin: 1.2, end: 1.0)
-  .chain(CurveTween(curve: Curves.fastOutSlowIn));
+// The curve and initial scale values were mostly eyeballed from iOS, however
+// they reuse the same animation curve that was modeled after native page
+// transitions.
+final Animatable<double> _dialogScaleTween = Tween<double>(begin: 1.3, end: 1.0)
+  .chain(CurveTween(curve: Curves.linearToEaseOut));
 
 Widget _buildCupertinoDialogTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
   final CurvedAnimation fadeAnimation = CurvedAnimation(
@@ -857,14 +1070,15 @@ Widget _buildCupertinoDialogTransitions(BuildContext context, Animation<double> 
     opacity: fadeAnimation,
     child: ScaleTransition(
       child: child,
-      scale: animation.drive(_dialogTween),
+      scale: animation.drive(_dialogScaleTween),
     ),
   );
 }
 
 /// Displays an iOS-style dialog above the current contents of the app, with
 /// iOS-style entrance and exit animations, modal barrier color, and modal
-/// barrier behavior (the dialog is not dismissible with a tap on the barrier).
+/// barrier behavior (by default, the dialog is not dismissible with a tap on
+/// the barrier).
 ///
 /// This function takes a `builder` which typically builds a [CupertinoDialog]
 /// or [CupertinoAlertDialog] widget. Content below the dialog is dimmed with a
@@ -877,15 +1091,20 @@ Widget _buildCupertinoDialogTransitions(BuildContext context, Animation<double> 
 /// It is only used when the method is called. Its corresponding widget can
 /// be safely removed from the tree before the dialog is closed.
 ///
-/// Returns a [Future] that resolves to the value (if any) that was passed to
-/// [Navigator.pop] when the dialog was closed.
+/// The `useRootNavigator` argument is used to determine whether to push the
+/// dialog to the [Navigator] furthest from or nearest to the given `context`.
+/// By default, `useRootNavigator` is `true` and the dialog route created by
+/// this method is pushed to the root navigator.
 ///
-/// The dialog route created by this method is pushed to the root navigator.
 /// If the application has multiple [Navigator] objects, it may be necessary to
 /// call `Navigator.of(context, rootNavigator: true).pop(result)` to close the
 /// dialog rather than just `Navigator.pop(context, result)`.
 ///
+/// Returns a [Future] that resolves to the value (if any) that was passed to
+/// [Navigator.pop] when the dialog was closed.
+///
 /// See also:
+///
 ///  * [CupertinoDialog], an iOS-style dialog.
 ///  * [CupertinoAlertDialog], an iOS-style alert dialog.
 ///  * [showDialog], which displays a Material-style dialog.
@@ -894,16 +1113,24 @@ Widget _buildCupertinoDialogTransitions(BuildContext context, Animation<double> 
 Future<T> showCupertinoDialog<T>({
   @required BuildContext context,
   @required WidgetBuilder builder,
+  bool useRootNavigator = true,
+  bool barrierDismissible = false,
+  RouteSettings routeSettings,
 }) {
   assert(builder != null);
+  assert(useRootNavigator != null);
   return showGeneralDialog(
     context: context,
-    barrierDismissible: false,
-    barrierColor: _kModalBarrierColor,
-    transitionDuration: const Duration(milliseconds: 300),
+    barrierDismissible: barrierDismissible,
+    barrierLabel: CupertinoLocalizations.of(context).modalBarrierDismissLabel,
+    barrierColor: CupertinoDynamicColor.resolve(_kModalBarrierColor, context),
+    // This transition duration was eyeballed comparing with iOS
+    transitionDuration: const Duration(milliseconds: 250),
     pageBuilder: (BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
       return builder(context);
     },
     transitionBuilder: _buildCupertinoDialogTransitions,
+    useRootNavigator: useRootNavigator,
+    routeSettings: routeSettings,
   );
 }

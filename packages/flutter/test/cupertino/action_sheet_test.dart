@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
@@ -10,8 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../widgets/semantics_tester.dart';
 
 void main() {
-  testWidgets('Verify that a tap on modal barrier dismisses an action sheet',
-          (WidgetTester tester) async {
+  testWidgets('Verify that a tap on modal barrier dismisses an action sheet', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         const CupertinoActionSheet(
@@ -30,8 +31,7 @@ void main() {
     expect(find.text('Action Sheet'), findsNothing);
   });
 
-  testWidgets('Verify that a tap on title section (not buttons) does not dismiss an action sheet',
-          (WidgetTester tester) async {
+  testWidgets('Verify that a tap on title section (not buttons) does not dismiss an action sheet', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         const CupertinoActionSheet(
@@ -56,14 +56,76 @@ void main() {
         CupertinoActionSheetAction(
           isDestructiveAction: true,
           child: const Text('Ok'),
-          onPressed: () {},
+          onPressed: () { },
         ),
       ),
     );
 
     final DefaultTextStyle widget = tester.widget(find.widgetWithText(DefaultTextStyle, 'Ok'));
 
-    expect(widget.style.color, CupertinoColors.destructiveRed);
+    expect(widget.style.color, const CupertinoDynamicColor.withBrightnessAndContrast(
+      color: Color.fromARGB(255, 255, 59, 48),
+      darkColor: Color.fromARGB(255, 255, 69, 58),
+      highContrastColor: Color.fromARGB(255, 215, 0, 21),
+      darkHighContrastColor: Color.fromARGB(255, 255, 105, 97),
+    ));
+  });
+
+  testWidgets('Action sheet dark mode', (WidgetTester tester) async {
+    final Widget action = CupertinoActionSheetAction(
+      child: const Text('action'),
+      onPressed: () {},
+    );
+
+    Brightness brightness = Brightness.light;
+    StateSetter stateSetter;
+
+    TextStyle actionTextStyle(String text) {
+      return tester.widget<DefaultTextStyle>(
+        find.descendant(
+          of: find.widgetWithText(CupertinoActionSheetAction, text),
+          matching: find.byType(DefaultTextStyle),
+        ),
+      ).style;
+    }
+
+    await tester.pumpWidget(
+      createAppWithButtonThatLaunchesActionSheet(
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setter) {
+            stateSetter = setter;
+            return CupertinoTheme(
+              data: CupertinoThemeData(
+                brightness: brightness,
+                primaryColor: const CupertinoDynamicColor.withBrightnessAndContrast(
+                  color: Color.fromARGB(255, 0, 122, 255),
+                  darkColor: Color.fromARGB(255, 10, 132, 255),
+                  highContrastColor: Color.fromARGB(255, 0, 64, 221),
+                  darkHighContrastColor: Color.fromARGB(255, 64, 156, 255),
+                ),
+              ),
+              child: CupertinoActionSheet(actions: <Widget>[action]),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Go'));
+    await tester.pump();
+
+    expect(
+      actionTextStyle('action').color.value,
+      const Color.fromARGB(255, 0, 122, 255).value,
+    );
+
+    stateSetter(() { brightness = Brightness.dark; });
+    await tester.pump();
+
+    expect(
+      actionTextStyle('action').color.value,
+      const Color.fromARGB(255, 10, 132, 255).value,
+    );
   });
 
   testWidgets('Action sheet default text style', (WidgetTester tester) async {
@@ -72,7 +134,7 @@ void main() {
         CupertinoActionSheetAction(
           isDefaultAction: true,
           child: const Text('Ok'),
-          onPressed: () {},
+          onPressed: () { },
         ),
       ),
     );
@@ -82,13 +144,12 @@ void main() {
     expect(widget.style.fontWeight, equals(FontWeight.w600));
   });
 
-  testWidgets('Action sheet text styles are correct when both title and message are included',
-          (WidgetTester tester) async {
+  testWidgets('Action sheet text styles are correct when both title and message are included', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         const CupertinoActionSheet(
           title: Text('Action Sheet'),
-          message: Text('An action sheet')
+          message: Text('An action sheet'),
         ),
       ),
     );
@@ -105,8 +166,7 @@ void main() {
     expect(messageStyle.style.fontWeight, FontWeight.w400);
   });
 
-  testWidgets('Action sheet text styles are correct when title but no message is included',
-          (WidgetTester tester) async {
+  testWidgets('Action sheet text styles are correct when title but no message is included', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         const CupertinoActionSheet(
@@ -124,8 +184,7 @@ void main() {
     expect(titleStyle.style.fontWeight, FontWeight.w400);
   });
 
-  testWidgets('Action sheet text styles are correct when message but no title is included',
-          (WidgetTester tester) async {
+  testWidgets('Action sheet text styles are correct when message but no title is included', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         const CupertinoActionSheet(
@@ -186,11 +245,11 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           actionScrollController: actionScrollController,
@@ -233,30 +292,30 @@ void main() {
               actions: <Widget>[
                 CupertinoActionSheetAction(
                   child: const Text('One'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Two'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Three'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Four'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Five'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
               ],
               actionScrollController: actionScrollController,
             ),
           );
         }),
-      )
+      ),
     );
 
     await tester.tap(find.text('Go'));
@@ -300,11 +359,11 @@ void main() {
               actions: <Widget>[
                 CupertinoActionSheetAction(
                   child: const Text('One'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Two'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
               ],
               messageScrollController: messageScrollController,
@@ -364,8 +423,7 @@ void main() {
     expect(find.text('One'), findsNothing);
   });
 
-  testWidgets('Action sheet width is correct when given infinite horizontal space',
-          (WidgetTester tester) async {
+  testWidgets('Action sheet width is correct when given infinite horizontal space', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         Row(
@@ -374,11 +432,11 @@ void main() {
               actions: <Widget>[
                 CupertinoActionSheetAction(
                   child: const Text('One'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Two'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
               ],
             ),
@@ -393,8 +451,7 @@ void main() {
     expect(tester.getSize(find.byType(CupertinoActionSheet)).width, 600.0);
   });
 
-  testWidgets('Action sheet height is correct when given infinite vertical space',
-          (WidgetTester tester) async {
+  testWidgets('Action sheet height is correct when given infinite vertical space', (WidgetTester tester) async {
     await tester.pumpWidget(
       createAppWithButtonThatLaunchesActionSheet(
         Column(
@@ -403,11 +460,11 @@ void main() {
               actions: <Widget>[
                 CupertinoActionSheetAction(
                   child: const Text('One'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
                 CupertinoActionSheetAction(
                   child: const Text('Two'),
-                  onPressed: () {},
+                  onPressed: () { },
                 ),
               ],
             ),
@@ -432,12 +489,12 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -459,16 +516,16 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -490,20 +547,20 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Three'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -525,24 +582,24 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Three'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Four'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -564,7 +621,7 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
         ),
@@ -586,11 +643,11 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
         ),
@@ -610,7 +667,7 @@ void main() {
         CupertinoActionSheet(
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: (){},
+            onPressed: () { },
           ),
         ),
       ),
@@ -668,16 +725,16 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -703,16 +760,16 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -725,19 +782,19 @@ void main() {
     expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, 600.0);
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(530.9, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(470.0, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(426.7, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(374.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(365.0, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(337.1, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(334.0, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(325.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(321.0, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(320.8, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
     expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(319.3, 0.1));
@@ -752,19 +809,19 @@ void main() {
     expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(319.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(388.4, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(449.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(492.6, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(544.9, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(554.2, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(582.1, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(585.2, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(593.9, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(598.2, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(598.5, 0.1));
 
     // Action sheet has disappeared
     await tester.pump(const Duration(milliseconds: 60));
@@ -780,16 +837,16 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -802,23 +859,23 @@ void main() {
     expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, 600.0);
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(530.9, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(470.0, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(426.7, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(374.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(365.0, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(337.1, 0.1));
 
     // Exit animation
     await tester.tapAt(const Offset(20.0, 20.0));
     await tester.pump(const Duration(milliseconds: 60));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(426.7, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(374.3, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
-    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(530.9, 0.1));
+    expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, closeTo(470.0, 0.1));
 
     await tester.pump(const Duration(milliseconds: 60));
     expect(tester.getTopLeft(find.byType(CupertinoActionSheet)).dy, 600.0);
@@ -840,16 +897,16 @@ void main() {
           actions: <Widget>[
             CupertinoActionSheetAction(
               child: const Text('One'),
-              onPressed: () {},
+              onPressed: () { },
             ),
             CupertinoActionSheetAction(
               child: const Text('Two'),
-              onPressed: () {},
+              onPressed: () { },
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
             child: const Text('Cancel'),
-            onPressed: () {},
+            onPressed: () { },
           ),
         ),
       ),
@@ -866,54 +923,64 @@ void main() {
             TestSemantics(
               children: <TestSemantics>[
                 TestSemantics(
-                  flags: <SemanticsFlag>[
-                    SemanticsFlag.scopesRoute,
-                    SemanticsFlag.namesRoute,
-                  ],
-                  label: 'Alert',
                   children: <TestSemantics>[
                     TestSemantics(
-                      children: <TestSemantics>[
-                        TestSemantics(
-                          label: 'The title',
-                        ),
-                        TestSemantics(
-                          label: 'The message',
-                        ),
-                      ],
-                    ),
-                    TestSemantics(
-                      children: <TestSemantics>[
-                        TestSemantics(
-                          flags: <SemanticsFlag>[
-                            SemanticsFlag.isButton,
-                          ],
-                          actions: <SemanticsAction>[
-                            SemanticsAction.tap,
-                          ],
-                          label: 'One',
-                        ),
-                        TestSemantics(
-                          flags: <SemanticsFlag>[
-                            SemanticsFlag.isButton,
-                          ],
-                          actions: <SemanticsAction>[
-                            SemanticsAction.tap,
-                          ],
-                          label: 'Two',
-                        ),
-                      ],
-                    ),
-                    TestSemantics(
                       flags: <SemanticsFlag>[
-                        SemanticsFlag.isButton,
+                        SemanticsFlag.scopesRoute,
+                        SemanticsFlag.namesRoute,
                       ],
-                      actions: <SemanticsAction>[
-                        SemanticsAction.tap,
+                      label: 'Alert',
+                      children: <TestSemantics>[
+                        TestSemantics(
+                          flags: <SemanticsFlag>[
+                            SemanticsFlag.hasImplicitScrolling,
+                          ],
+                          children: <TestSemantics>[
+                            TestSemantics(
+                              label: 'The title',
+                            ),
+                            TestSemantics(
+                              label: 'The message',
+                            ),
+                          ],
+                        ),
+                        TestSemantics(
+                          flags: <SemanticsFlag>[
+                            SemanticsFlag.hasImplicitScrolling,
+                          ],
+                          children: <TestSemantics>[
+                            TestSemantics(
+                              flags: <SemanticsFlag>[
+                                SemanticsFlag.isButton,
+                              ],
+                              actions: <SemanticsAction>[
+                                SemanticsAction.tap,
+                              ],
+                              label: 'One',
+                            ),
+                            TestSemantics(
+                              flags: <SemanticsFlag>[
+                                SemanticsFlag.isButton,
+                              ],
+                              actions: <SemanticsAction>[
+                                SemanticsAction.tap,
+                              ],
+                              label: 'Two',
+                            ),
+                          ],
+                        ),
+                        TestSemantics(
+                          flags: <SemanticsFlag>[
+                            SemanticsFlag.isButton,
+                          ],
+                          actions: <SemanticsAction>[
+                            SemanticsAction.tap,
+                          ],
+                          label: 'Cancel',
+                        ),
                       ],
-                      label: 'Cancel',
-                    )
-                  ],
+                    ),
+                  ]
                 ),
               ],
             ),
@@ -936,7 +1003,7 @@ RenderBox findScrollableActionsSectionRenderBox(WidgetTester tester) {
     }),
   );
   assert(actionsSection is RenderBox);
-  return actionsSection;
+  return actionsSection as RenderBox;
 }
 
 Widget createAppWithButtonThatLaunchesActionSheet(Widget actionSheet) {

@@ -1,30 +1,34 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'date_picker.dart';
+
 /// Determines the order of the columns inside [CupertinoDatePicker] in
 /// time and date time mode.
 enum DatePickerDateTimeOrder {
   /// Order of the columns, from left to right: date, hour, minute, am/pm.
   ///
-  /// Example: [Fri Aug 31 | 02 | 08 | PM].
+  /// Example: Fri Aug 31 | 02 | 08 | PM.
   date_time_dayPeriod,
   /// Order of the columns, from left to right: date, am/pm, hour, minute.
   ///
-  /// Example: [Fri Aug 31 | PM | 02 | 08].
+  /// Example: Fri Aug 31 | PM | 02 | 08.
   date_dayPeriod_time,
   /// Order of the columns, from left to right: hour, minute, am/pm, date.
   ///
-  /// Example: [02 | 08 | PM | Fri Aug 31].
+  /// Example: 02 | 08 | PM | Fri Aug 31.
   time_dayPeriod_date,
   /// Order of the columns, from left to right: am/pm, hour, minute, date.
   ///
-  /// Example: [PM | 02 | 08 | Fri Aug 31].
+  /// Example: PM | 02 | 08 | Fri Aug 31.
   dayPeriod_time_date,
 }
 
@@ -32,19 +36,19 @@ enum DatePickerDateTimeOrder {
 enum DatePickerDateOrder {
   /// Order of the columns, from left to right: day, month, year.
   ///
-  /// Example: [12 | March | 1996]
+  /// Example: 12 | March | 1996
   dmy,
   /// Order of the columns, from left to right: month, day, year.
   ///
-  /// Example: [March | 12 | 1996]
+  /// Example: March | 12 | 1996
   mdy,
   /// Order of the columns, from left to right: year, month, day.
   ///
-  /// Example: [1996 | March | 12]
+  /// Example: 1996 | March | 12
   ymd,
   /// Order of the columns, from left to right: year, day, month.
   ///
-  /// Example: [1996 | 12 | March]
+  /// Example: 1996 | 12 | March
   ydm,
 }
 
@@ -63,6 +67,7 @@ abstract class CupertinoLocalizations {
   ///
   ///  - US English: 2018
   ///  - Korean: 2018년
+  // The global version uses date symbols data from the intl package.
   String datePickerYear(int yearIndex);
 
   /// Month that is shown in [CupertinoDatePicker] spinner corresponding to
@@ -72,6 +77,7 @@ abstract class CupertinoLocalizations {
   ///
   ///  - US English: January
   ///  - Korean: 1월
+  // The global version uses date symbols data from the intl package.
   String datePickerMonth(int monthIndex);
 
   /// Day of month that is shown in [CupertinoDatePicker] spinner corresponding
@@ -81,6 +87,7 @@ abstract class CupertinoLocalizations {
   ///
   ///  - US English: 1
   ///  - Korean: 1일
+  // The global version uses date symbols data from the intl package.
   String datePickerDayOfMonth(int dayIndex);
 
   /// The medium-width date format that is shown in [CupertinoDatePicker]
@@ -90,6 +97,7 @@ abstract class CupertinoLocalizations {
   ///
   /// - US English: Wed Sep 27
   /// - Russian: ср сент. 27
+  // The global version is based on intl package's DateFormat.MMMEd.
   String datePickerMediumDate(DateTime date);
 
   /// Hour that is shown in [CupertinoDatePicker] spinner corresponding
@@ -99,9 +107,11 @@ abstract class CupertinoLocalizations {
   ///
   ///  - US English: 1
   ///  - Arabic: ٠١
+  // The global version uses date symbols data from the intl package.
   String datePickerHour(int hour);
 
   /// Semantics label for the given hour value in [CupertinoDatePicker].
+  // The global version uses the translated string from the arb file.
   String datePickerHourSemanticsLabel(int hour);
 
   /// Minute that is shown in [CupertinoDatePicker] spinner corresponding
@@ -111,79 +121,115 @@ abstract class CupertinoLocalizations {
   ///
   ///  - US English: 01
   ///  - Arabic: ٠١
+  // The global version uses date symbols data from the intl package.
   String datePickerMinute(int minute);
 
   /// Semantics label for the given minute value in [CupertinoDatePicker].
+  // The global version uses the translated string from the arb file.
   String datePickerMinuteSemanticsLabel(int minute);
 
   /// The order of the date elements that will be shown in [CupertinoDatePicker].
+  // The global version uses the translated string from the arb file.
   DatePickerDateOrder get datePickerDateOrder;
 
   /// The order of the time elements that will be shown in [CupertinoDatePicker].
+  // The global version uses the translated string from the arb file.
   DatePickerDateTimeOrder get datePickerDateTimeOrder;
 
   /// The abbreviation for ante meridiem (before noon) shown in the time picker.
+  // The global version uses the translated string from the arb file.
   String get anteMeridiemAbbreviation;
 
   /// The abbreviation for post meridiem (after noon) shown in the time picker.
+  // The global version uses the translated string from the arb file.
   String get postMeridiemAbbreviation;
 
+  /// Label shown in date pickers when the date is today.
+  // The global version uses the translated string from the arb file.
+  String get todayLabel;
+
   /// The term used by the system to announce dialog alerts.
+  // The global version uses the translated string from the arb file.
   String get alertDialogLabel;
 
-  /// Hour that is shown in [CupertinoCountdownTimerPicker] corresponding to
+  /// The accessibility label used on a tab in a [CupertinoTabBar].
+  ///
+  /// This message describes the index of the selected tab and how many tabs
+  /// there are, e.g. 'tab, 1 of 2' in United States English.
+  ///
+  /// `tabIndex` and `tabCount` must be greater than or equal to one.
+  String tabSemanticsLabel({int tabIndex, int tabCount});
+
+  /// Hour that is shown in [CupertinoTimerPicker] corresponding to
   /// the given hour value.
   ///
   /// Examples: timerPickerHour(1) in:
   ///
   ///  - US English: 1
   ///  - Arabic: ١
+  // The global version uses date symbols data from the intl package.
   String timerPickerHour(int hour);
 
-  /// Minute that is shown in [CupertinoCountdownTimerPicker] corresponding to
+  /// Minute that is shown in [CupertinoTimerPicker] corresponding to
   /// the given minute value.
   ///
   /// Examples: timerPickerMinute(1) in:
   ///
   ///  - US English: 1
   ///  - Arabic: ١
+  // The global version uses date symbols data from the intl package.
   String timerPickerMinute(int minute);
 
-  /// Second that is shown in [CupertinoCountdownTimerPicker] corresponding to
+  /// Second that is shown in [CupertinoTimerPicker] corresponding to
   /// the given second value.
   ///
   /// Examples: timerPickerSecond(1) in:
   ///
   ///  - US English: 1
   ///  - Arabic: ١
+  // The global version uses date symbols data from the intl package.
   String timerPickerSecond(int second);
 
   /// Label that appears next to the hour picker in
-  /// [CupertinoCountdownTimerPicker] when selected hour value is `hour`.
+  /// [CupertinoTimerPicker] when selected hour value is `hour`.
   /// This function will deal with pluralization based on the `hour` parameter.
+  // The global version uses the translated string from the arb file.
   String timerPickerHourLabel(int hour);
 
   /// Label that appears next to the minute picker in
-  /// [CupertinoCountdownTimerPicker] when selected minute value is `minute`.
+  /// [CupertinoTimerPicker] when selected minute value is `minute`.
   /// This function will deal with pluralization based on the `minute` parameter.
+  // The global version uses the translated string from the arb file.
   String timerPickerMinuteLabel(int minute);
 
   /// Label that appears next to the minute picker in
-  /// [CupertinoCountdownTimerPicker] when selected minute value is `second`.
+  /// [CupertinoTimerPicker] when selected minute value is `second`.
   /// This function will deal with pluralization based on the `second` parameter.
+  // The global version uses the translated string from the arb file.
   String timerPickerSecondLabel(int second);
 
   /// The term used for cutting
+  // The global version uses the translated string from the arb file.
   String get cutButtonLabel;
 
   /// The term used for copying
+  // The global version uses the translated string from the arb file.
   String get copyButtonLabel;
 
   /// The term used for pasting
+  // The global version uses the translated string from the arb file.
   String get pasteButtonLabel;
 
   /// The term used for selecting everything
+  // The global version uses the translated string from the arb file.
   String get selectAllButtonLabel;
+
+  /// Label read out by accessibility tools (VoiceOver) for a modal
+  /// barrier to indicate that a tap dismisses the barrier.
+  ///
+  /// A modal barrier can for example be found behind an alert or popup to block
+  /// user interaction with elements behind it.
+  String get modalBarrierDismissLabel;
 
   /// The `CupertinoLocalizations` from the closest [Localizations] instance
   /// that encloses the given context.
@@ -213,9 +259,12 @@ class _CupertinoLocalizationsDelegate extends LocalizationsDelegate<CupertinoLoc
 
   @override
   bool shouldReload(_CupertinoLocalizationsDelegate old) => false;
+
+  @override
+  String toString() => 'DefaultCupertinoLocalizations.delegate(en_US)';
 }
 
-/// US English strings for the cupertino widgets.
+/// US English strings for the Cupertino widgets.
 class DefaultCupertinoLocalizations implements CupertinoLocalizations {
   /// Constructs an object that defines the cupertino widgets' localized strings
   /// for US English (only).
@@ -287,7 +336,7 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
   @override
   String datePickerMinuteSemanticsLabel(int minute) {
     if (minute == 1)
-       return '1 minute';
+      return '1 minute';
     return minute.toString() + ' minutes';
   }
 
@@ -311,7 +360,17 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
   String get postMeridiemAbbreviation => 'PM';
 
   @override
+  String get todayLabel => 'Today';
+
+  @override
   String get alertDialogLabel => 'Alert';
+
+  @override
+  String tabSemanticsLabel({int tabIndex, int tabCount}) {
+    assert(tabIndex >= 1);
+    assert(tabCount >= 1);
+    return 'Tab $tabIndex of $tabCount';
+  }
 
   @override
   String timerPickerHour(int hour) => hour.toString();
@@ -326,10 +385,10 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
   String timerPickerHourLabel(int hour) => hour == 1 ? 'hour' : 'hours';
 
   @override
-  String timerPickerMinuteLabel(int minute) => 'min';
+  String timerPickerMinuteLabel(int minute) => 'min.';
 
   @override
-  String timerPickerSecondLabel(int second) => 'sec';
+  String timerPickerSecondLabel(int second) => 'sec.';
 
   @override
   String get cutButtonLabel => 'Cut';
@@ -342,6 +401,9 @@ class DefaultCupertinoLocalizations implements CupertinoLocalizations {
 
   @override
   String get selectAllButtonLabel => 'Select All';
+
+  @override
+  String get modalBarrierDismissLabel => 'Dismiss';
 
   /// Creates an object that provides US English resource values for the
   /// cupertino library widgets.

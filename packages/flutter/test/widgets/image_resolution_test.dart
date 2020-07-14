@@ -1,7 +1,10 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
+@TestOn('!chrome') // asset bundle behaves differently.
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui show Image, ImageByteFormat;
@@ -11,6 +14,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'image_data.dart';
 
 class TestImage implements ui.Image {
   TestImage(this.scale);
@@ -26,7 +31,7 @@ class TestImage implements ui.Image {
   void dispose() { }
 
   @override
-  Future<ByteData> toByteData({ui.ImageByteFormat format}) async {
+  Future<ByteData> toByteData({ ui.ImageByteFormat format = ui.ImageByteFormat.rawRgba }) async {
     throw UnsupportedError('Cannot encode test image');
   }
 }
@@ -86,7 +91,7 @@ class TestAssetBundle extends CachingAssetBundle {
   Future<String> loadString(String key, { bool cache = true }) {
     if (key == 'AssetManifest.json')
       return SynchronousFuture<String>(manifest);
-    return null;
+    return SynchronousFuture<String>(null);
   }
 
   @override
@@ -100,13 +105,13 @@ class FakeImageStreamCompleter extends ImageStreamCompleter {
 }
 
 class TestAssetImage extends AssetImage {
-  TestAssetImage(String name) : super(name);
+  const TestAssetImage(String name) : super(name);
 
   @override
-  ImageStreamCompleter load(AssetBundleImageKey key) {
+  ImageStreamCompleter load(AssetBundleImageKey key, DecoderCallback decode) {
     ImageInfo imageInfo;
     key.bundle.load(key.name).then<void>((ByteData data) {
-      final TestByteData testData = data;
+      final TestByteData testData = data as TestByteData;
       final ui.Image image = TestImage(testData.scale);
       imageInfo = ImageInfo(image: image, scale: key.scale);
     });
@@ -117,7 +122,7 @@ class TestAssetImage extends AssetImage {
   }
 }
 
-Widget buildImageAtRatio(String image, Key key, double ratio, bool inferSize, [AssetBundle bundle]) {
+Widget buildImageAtRatio(String image, Key key, double ratio, bool inferSize, [ AssetBundle bundle ]) {
   const double windowSize = 500.0; // 500 logical pixels
   const double imageSize = 200.0; // 200 logical pixels
 
@@ -125,7 +130,7 @@ Widget buildImageAtRatio(String image, Key key, double ratio, bool inferSize, [A
     data: MediaQueryData(
       size: const Size(windowSize, windowSize),
       devicePixelRatio: ratio,
-      padding: const EdgeInsets.all(0.0)
+      padding: const EdgeInsets.all(0.0),
     ),
     child: DefaultAssetBundle(
       bundle: bundle ?? TestAssetBundle(),
@@ -134,7 +139,7 @@ Widget buildImageAtRatio(String image, Key key, double ratio, bool inferSize, [A
           Image(
             key: key,
             excludeFromSemantics: true,
-            image: TestAssetImage(image)
+            image: TestAssetImage(image),
           ) :
           Image(
             key: key,
@@ -142,10 +147,34 @@ Widget buildImageAtRatio(String image, Key key, double ratio, bool inferSize, [A
             image: TestAssetImage(image),
             height: imageSize,
             width: imageSize,
-            fit: BoxFit.fill
-          )
-      )
-    )
+            fit: BoxFit.fill,
+          ),
+      ),
+    ),
+  );
+}
+
+Widget buildImageCacheResized(String name, Key key, int width, int height, int cacheWidth, int cacheHeight) {
+  return Center(
+    child: RepaintBoundary(
+      child: Container(
+        width: 250,
+        height: 250,
+        child: Center(
+          child: Image.memory(
+            Uint8List.fromList(kTransparentImage),
+            key: key,
+            excludeFromSemantics: true,
+            color: const Color(0xFF00FFFF),
+            colorBlendMode: BlendMode.plus,
+            width: width.toDouble(),
+            height: height.toDouble(),
+            cacheWidth: cacheWidth,
+            cacheHeight: cacheHeight,
+          ),
+        ),
+      ),
+    ),
   );
 }
 
@@ -153,7 +182,7 @@ RenderImage getRenderImage(WidgetTester tester, Key key) {
   return tester.renderObject<RenderImage>(find.byKey(key));
 }
 TestImage getTestImage(WidgetTester tester, Key key) {
-  return tester.renderObject<RenderImage>(find.byKey(key)).image;
+  return tester.renderObject<RenderImage>(find.byKey(key)).image as TestImage;
 }
 
 Future<void> pumpTreeToLayout(WidgetTester tester, Widget widget) {
@@ -300,6 +329,24 @@ void main() {
     await pumpTreeToLayout(tester, buildImageAtRatio(image, key, ratio, true, bundle));
     expect(getRenderImage(tester, key).size, const Size(480.0, 480.0));
     expect(getTestImage(tester, key).scale, 10.0);
+  });
+
+  testWidgets('Image cache resize upscale display 5', (WidgetTester tester) async {
+    final Key key = GlobalKey();
+    await pumpTreeToLayout(tester, buildImageCacheResized(image, key, 5, 5, 20, 20));
+    expect(getRenderImage(tester, key).size, const Size(5.0, 5.0));
+  });
+
+  testWidgets('Image cache resize upscale display 50', (WidgetTester tester) async {
+    final Key key = GlobalKey();
+    await pumpTreeToLayout(tester, buildImageCacheResized(image, key, 50, 50, 20, 20));
+    expect(getRenderImage(tester, key).size, const Size(50.0, 50.0));
+  });
+
+  testWidgets('Image cache resize downscale display 5', (WidgetTester tester) async {
+    final Key key = GlobalKey();
+    await pumpTreeToLayout(tester, buildImageCacheResized(image, key, 5, 5, 1, 1));
+    expect(getRenderImage(tester, key).size, const Size(5.0, 5.0));
   });
 
 }

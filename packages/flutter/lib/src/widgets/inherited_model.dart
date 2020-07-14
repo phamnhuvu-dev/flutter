@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:collection';
 
@@ -25,6 +27,8 @@ import 'framework.dart';
 ///
 /// The type parameter `T` is the type of the model aspect objects.
 ///
+/// {@youtube 560 315 https://www.youtube.com/watch?v=ml5uefGgkaA}
+///
 /// Widgets create a dependency on an [InheritedModel] with a static method:
 /// [InheritedModel.inheritFrom]. This method's `context` parameter
 /// defines the subtree that will be rebuilt when the model changes.
@@ -46,7 +50,7 @@ import 'framework.dart';
 ///
 /// When the inherited model is rebuilt the [updateShouldNotify] and
 /// [updateShouldNotifyDependent] methods are used to decide what
-/// should be rebuilt.  If [updateShouldNotify] returns true, then the
+/// should be rebuilt. If [updateShouldNotify] returns true, then the
 /// inherited model's [updateShouldNotifyDependent] method is tested for
 /// each dependent and the set of aspect objects it depends on.
 /// The [updateShouldNotifyDependent] method must compare the set of aspect
@@ -78,11 +82,19 @@ import 'framework.dart';
 ///
 /// In the previous example the dependencies checked by
 /// [updateShouldNotifyDependent] are just the aspect strings passed to
-/// `inheritFromWidgetOfExactType`. They're represented as a [Set] because
+/// `dependOnInheritedWidgetOfExactType`. They're represented as a [Set] because
 /// one Widget can depend on more than one aspect of the model.
 /// If a widget depends on the model but doesn't specify an aspect,
 /// then changes in the model will cause the widget to be rebuilt
 /// unconditionally.
+///
+/// See also:
+///
+///  * [InheritedWidget], an inherited widget that only notifies dependents
+///    when its value is different.
+///  * [InheritedNotifier], an inherited widget whose value can be a
+///    [Listenable], and which will notify dependents whenever the value
+///    sends notifications.
 abstract class InheritedModel<T> extends InheritedWidget {
   /// Creates an inherited widget that supports dependencies qualified by
   /// "aspects", i.e. a descendant widget can indicate that it should
@@ -109,15 +121,15 @@ abstract class InheritedModel<T> extends InheritedWidget {
 
   // The [result] will be a list of all of context's type T ancestors concluding
   // with the one that supports the specified model [aspect].
-  static Iterable<InheritedElement> _findModels<T extends InheritedModel<Object>>(BuildContext context, Object aspect) sync* {
-    final InheritedElement model = context.ancestorInheritedElementForWidgetOfExactType(T);
+  static void _findModels<T extends InheritedModel<Object>>(BuildContext context, Object aspect, List<InheritedElement> results) {
+    final InheritedElement model = context.getElementForInheritedWidgetOfExactType<T>();
     if (model == null)
       return;
 
-    yield model;
+    results.add(model);
 
     assert(model.widget is T);
-    final T modelWidget = model.widget;
+    final T modelWidget = model.widget as T;
     if (modelWidget.isSupportedAspect(aspect))
       return;
 
@@ -129,7 +141,7 @@ abstract class InheritedModel<T> extends InheritedWidget {
     if (modelParent == null)
       return;
 
-    yield* _findModels<T>(modelParent, aspect);
+    _findModels<T>(modelParent, aspect, results);
   }
 
   /// Makes [context] dependent on the specified [aspect] of an [InheritedModel]
@@ -144,17 +156,24 @@ abstract class InheritedModel<T> extends InheritedWidget {
   /// returns true.
   ///
   /// If [aspect] is null this method is the same as
-  /// `context.inheritFromWidgetOfExactType(T)`.
+  /// `context.dependOnInheritedWidgetOfExactType<T>()`.
+  ///
+  /// If no ancestor of type T exists, null is returned.
   static T inheritFrom<T extends InheritedModel<Object>>(BuildContext context, { Object aspect }) {
     if (aspect == null)
-      return context.inheritFromWidgetOfExactType(T);
+      return context.dependOnInheritedWidgetOfExactType<T>();
 
     // Create a dependency on all of the type T ancestor models up until
     // a model is found for which isSupportedAspect(aspect) is true.
-    final List<InheritedElement> models = _findModels<T>(context, aspect).toList();
+    final List<InheritedElement> models = <InheritedElement>[];
+    _findModels<T>(context, aspect, models);
+    if (models.isEmpty) {
+      return null;
+    }
+
     final InheritedElement lastModel = models.last;
-    for (InheritedElement model in models) {
-      final T value = context.inheritFromElement(model, aspect: aspect);
+    for (final InheritedElement model in models) {
+      final T value = context.dependOnInheritedElement(model, aspect: aspect) as T;
       if (model == lastModel)
         return value;
     }
@@ -170,11 +189,11 @@ class InheritedModelElement<T> extends InheritedElement {
   InheritedModelElement(InheritedModel<T> widget) : super(widget);
 
   @override
-  InheritedModel<T> get widget => super.widget;
+  InheritedModel<T> get widget => super.widget as InheritedModel<T>;
 
   @override
   void updateDependencies(Element dependent, Object aspect) {
-    final Set<T> dependencies = getDependencies(dependent);
+    final Set<T> dependencies = getDependencies(dependent) as Set<T>;
     if (dependencies != null && dependencies.isEmpty)
       return;
 
@@ -182,13 +201,13 @@ class InheritedModelElement<T> extends InheritedElement {
       setDependencies(dependent, HashSet<T>());
     } else {
       assert(aspect is T);
-      setDependencies(dependent, (dependencies ?? HashSet<T>())..add(aspect));
+      setDependencies(dependent, (dependencies ?? HashSet<T>())..add(aspect as T));
     }
   }
 
   @override
   void notifyDependent(InheritedModel<T> oldWidget, Element dependent) {
-    final Set<T> dependencies = getDependencies(dependent);
+    final Set<T> dependencies = getDependencies(dependent) as Set<T>;
     if (dependencies == null)
       return;
     if (dependencies.isEmpty || widget.updateShouldNotifyDependent(oldWidget, dependencies))
